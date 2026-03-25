@@ -8,7 +8,7 @@ export default async function BlogPage() {
   const posts = await fetchBlog();
 
   return (
-    <div className="pb-20 page-enter">
+    <div className="pb-[80px] page-enter">
       <PageHeader title="個人ブログ" icon="📝" />
 
       <div className="p-4 space-y-3">

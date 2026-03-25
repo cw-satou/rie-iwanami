@@ -19,7 +19,7 @@ export default function EventDetailPage({
   }
 
   return (
-    <div className="pb-20 page-enter">
+    <div className="pb-[80px] page-enter">
       {/* Header */}
       <div className="header-gradient px-4 py-3">
         <div className="flex items-center gap-3">

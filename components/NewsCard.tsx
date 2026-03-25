@@ -17,17 +17,17 @@ const iconMap: Record<string, string> = {
 export default function NewsCard({ item }: { item: NewsItem }) {
   const content = (
     <>
-      <div className="w-12 h-12 rounded-xl bg-pink-50 flex items-center justify-center text-2xl flex-shrink-0">
+      <div className="w-[48px] h-[48px] rounded-xl bg-pink-50 flex items-center justify-center text-[24px] flex-shrink-0">
         {iconMap[item.tag] || "📰"}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-xs text-gray-400">{item.date}</span>
+        <div className="flex items-center gap-[8px] mb-[4px]">
+          <span className="text-[12px] text-gray-400">{item.date}</span>
           <span className={`tag ${tagClassMap[item.tag] || "tag-other"}`}>
             {item.tag}
           </span>
         </div>
-        <p className="text-sm font-medium leading-snug line-clamp-2">
+        <p className="text-[14px] font-medium leading-snug line-clamp-2">
           {item.title}
         </p>
       </div>
@@ -35,7 +35,7 @@ export default function NewsCard({ item }: { item: NewsItem }) {
   );
 
   const className =
-    "flex items-start gap-3 p-4 bg-white rounded-2xl card-hover border border-pink-100/50";
+    "flex items-start gap-[12px] p-[16px] bg-white rounded-2xl card-hover border border-pink-100/50";
 
   if (item.url) {
     return (

@@ -8,7 +8,7 @@ export default async function YoutubePage() {
   const videos = await fetchYouTubeVideos();
 
   return (
-    <div className="pb-20 page-enter">
+    <div className="pb-[80px] page-enter">
       <PageHeader title="Youtube" icon="▶️" />
 
       <div className="p-4 space-y-4">

@@ -18,7 +18,7 @@ const agencyLinks = [
 
 export default function AgencyPage() {
   return (
-    <div className="pb-20 page-enter">
+    <div className="pb-[80px] page-enter">
       <PageHeader title="事務所情報" icon="🏢" />
 
       <div className="p-4 space-y-4">

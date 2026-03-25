@@ -37,7 +37,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="pb-20 page-enter">
+    <div className="pb-[80px] page-enter">
       <PageHeader title="会員ログイン" />
 
       <div className="p-4">

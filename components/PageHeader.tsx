@@ -16,18 +16,18 @@ export default function PageHeader({
   const router = useRouter();
 
   return (
-    <header className="header-gradient px-4 py-3 flex items-center gap-3 sticky top-0 z-40">
+    <header className="header-gradient px-[16px] py-[12px] flex items-center gap-[12px] sticky top-0 z-40">
       {showBack && (
         <button
           onClick={() => router.back()}
-          className="text-white text-xl w-8 h-8 flex items-center justify-center rounded-full active:bg-white/20"
+          className="text-white text-[20px] w-[32px] h-[32px] flex items-center justify-center rounded-full active:bg-white/20"
           aria-label="戻る"
         >
           ←
         </button>
       )}
-      {icon && <span className="text-xl">{icon}</span>}
-      <h1 className="text-white font-bold text-base">{title}</h1>
+      {icon && <span className="text-[20px]">{icon}</span>}
+      <h1 className="text-white font-bold text-[16px]">{title}</h1>
     </header>
   );
 }
