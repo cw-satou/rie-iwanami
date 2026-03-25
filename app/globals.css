@@ -12,13 +12,14 @@
 }
 
 html {
-  font-size: 125%; /* 20px base — 文字サイズ125% */
+  font-size: 100%;
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
 }
 
 body {
   font-family: "Noto Sans JP", sans-serif;
+  font-size: 16px;
   background: var(--color-bg);
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
