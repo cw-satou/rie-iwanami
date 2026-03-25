@@ -1,12 +1,23 @@
 import { YouTubeVideo } from "./types";
 
-// Known video IDs for Iwanami Rie
+// Known video IDs for Iwanami Rie (singing videos / MVs)
 const KNOWN_VIDEOS = [
   "j7K2oROq304", // 薔薇の化身 MV
   "FVk4d8it06A", // 月の鱗 MV
   "maqTdh9KKBI", // 愛が眠るまで MV
   "LQCOiOrhupY", // こんな夜はせつなくて MV
   "-0NctQL236k", // いつも会いたくなる人
+];
+
+// Reiwa Kayo Channel videos (@rie_iwanami)
+const REIWA_CHANNEL_VIDEOS = [
+  "DeE121HEfgE", // 【カバー】残酷な天使のテーゼ/高橋洋子
+  "ksON_PMqwgM", // 【お知らせ】トワイライトライブin浅草
+  "biF-H_0kcig", // 【カバー】あの素晴らしい愛をもう一度
+  "tV1_4a-BL9g", // 【カバー】傷だらけのローラ/西城秀樹
+  "zUUyQvoRYbg", // 【カバー】SWEET MEMORIES/松田聖子
+  "dIkdmSPirI4", // 【カバー】恋/松山千春
+  "39cHSHlfu0A", // 【カバー】メロディー/玉置浩二
 ];
 
 export async function fetchYouTubeVideos(): Promise<YouTubeVideo[]> {
@@ -64,6 +75,39 @@ export async function fetchYouTubeVideos(): Promise<YouTubeVideo[]> {
         thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
         publishedAt: "",
         channelTitle: "",
+      });
+    }
+  }
+
+  return videos;
+}
+
+export async function fetchReiwaChannelVideos(): Promise<YouTubeVideo[]> {
+  const videos: YouTubeVideo[] = [];
+
+  for (const videoId of REIWA_CHANNEL_VIDEOS) {
+    try {
+      const res = await fetch(
+        `https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoId}`,
+        { next: { revalidate: 86400 } }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        videos.push({
+          id: videoId,
+          title: data.title || `岩波理恵 - Video`,
+          thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+          publishedAt: "",
+          channelTitle: data.author_name || "岩波理恵の令和歌謡チャンネル",
+        });
+      }
+    } catch {
+      videos.push({
+        id: videoId,
+        title: `岩波理恵 - Video`,
+        thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+        publishedAt: "",
+        channelTitle: "岩波理恵の令和歌謡チャンネル",
       });
     }
   }

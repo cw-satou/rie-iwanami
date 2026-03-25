@@ -12,7 +12,7 @@
 }
 
 html {
-  font-size: 200%; /* 32px base — 文字サイズ倍 */
+  font-size: 125%; /* 20px base — 文字サイズ125% */
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
 }
@@ -34,16 +34,9 @@ body {
   box-shadow: 0 0 40px rgba(200, 107, 138, 0.1);
 }
 
-/* Fixed-size bottom nav (px-based to resist rem scaling) */
+/* Bottom nav */
 .bottom-nav {
   height: 64px;
-}
-.bottom-nav span.nav-icon {
-  font-size: 20px;
-  line-height: 1;
-}
-.bottom-nav span.nav-label {
-  font-size: 11px;
 }
 
 /* Page transition */
@@ -67,7 +60,7 @@ body {
   display: inline-block;
   padding: 2px 10px;
   border-radius: 12px;
-  font-size: 11px;
+  font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.03em;
 }

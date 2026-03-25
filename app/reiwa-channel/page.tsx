@@ -1,15 +1,15 @@
 import PageHeader from "@/components/PageHeader";
 import BottomNav from "@/components/BottomNav";
-import { fetchYouTubeVideos } from "@/lib/youtube";
+import { fetchReiwaChannelVideos } from "@/lib/youtube";
 
 export const revalidate = 3600;
 
-export default async function YoutubePage() {
-  const videos = await fetchYouTubeVideos();
+export default async function ReiwaChannelPage() {
+  const videos = await fetchReiwaChannelVideos();
 
   return (
     <div className="pb-20 page-enter">
-      <PageHeader title="Youtube" icon="▶️" />
+      <PageHeader title="令和歌謡チャンネル" icon="📺" />
 
       <div className="p-4 space-y-4">
         {videos.map((video) => (
@@ -22,6 +22,7 @@ export default async function YoutubePage() {
           >
             {/* Thumbnail */}
             <div className="relative aspect-video bg-gray-100">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={video.thumbnail}
                 alt={video.title}
@@ -59,12 +60,12 @@ export default async function YoutubePage() {
 
       <div className="text-center py-4">
         <a
-          href="https://www.youtube.com/@channel-gq1tx"
+          href="https://www.youtube.com/@rie_iwanami"
           target="_blank"
           rel="noopener noreferrer"
           className="text-sm text-pink-500 font-medium"
         >
-          YouTubeチャンネルを見る →
+          チャンネルをYouTubeで見る →
         </a>
       </div>
 

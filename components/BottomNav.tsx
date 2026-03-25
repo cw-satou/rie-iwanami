@@ -25,15 +25,15 @@ export default function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center justify-center gap-[2px] w-full h-full transition-colors ${
+              className={`flex flex-col items-center justify-center gap-0.5 w-full h-full transition-colors ${
                 isActive
                   ? "text-pink-500"
                   : "text-gray-400 active:text-pink-400"
               }`}
             >
-              <span className="nav-icon">{item.icon}</span>
+              <span className="text-xl leading-none">{item.icon}</span>
               <span
-                className={`nav-label font-medium ${
+                className={`text-[0.6rem] font-medium ${
                   isActive ? "text-pink-500" : "text-gray-500"
                 }`}
               >

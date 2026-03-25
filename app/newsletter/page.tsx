@@ -61,7 +61,7 @@ export default function NewsletterPage() {
   // Loading state
   if (loading) {
     return (
-      <div className="pb-[80px]">
+      <div className="pb-20">
         <PageHeader title="ファンクラブ会報" icon="📖" />
         <div className="p-4 space-y-3">
           {[...Array(3)].map((_, i) => (
@@ -77,7 +77,7 @@ export default function NewsletterPage() {
   if (selectedNl && selectedNl.pages) {
     const pages = selectedNl.pages;
     return (
-      <div className="pb-[80px] page-enter">
+      <div className="pb-20 page-enter">
         <div className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-pink-100">
           <div className="flex items-center justify-between px-4 py-3">
             <button
@@ -172,7 +172,7 @@ export default function NewsletterPage() {
 
   // Main newsletter list view
   return (
-    <div className="pb-[80px] page-enter">
+    <div className="pb-20 page-enter">
       <PageHeader title="ファンクラブ会報" icon="📖" />
 
       {loggedIn ? (

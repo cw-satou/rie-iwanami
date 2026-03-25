@@ -44,7 +44,7 @@ export default function NewsEventsPage() {
   }, []);
 
   return (
-    <div className="pb-[80px] page-enter">
+    <div className="pb-20 page-enter">
       <PageHeader title="ニュース / イベント" icon="📰" />
 
       {/* Tab switcher */}
