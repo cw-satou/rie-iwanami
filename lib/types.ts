@@ -25,8 +25,10 @@ export interface Newsletter {
   id: string;
   vol: string;
   issue: string;
+  title: string;
   gradient: string;
-  imageUrl?: string;
+  coverImage: string;
+  pages: string[];
 }
 
 export interface MemberSession {
