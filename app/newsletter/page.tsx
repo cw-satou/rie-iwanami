@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import PageHeader from "@/components/PageHeader";
@@ -24,6 +24,112 @@ export default function NewsletterPage() {
   const [loading, setLoading] = useState(true);
   const [selectedNl, setSelectedNl] = useState<NewsletterPreview | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
+  const [zoomOpen, setZoomOpen] = useState(false);
+  const [zoomScale, setZoomScale] = useState(1);
+  const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
+  const zoomRef = useRef<HTMLDivElement>(null);
+  const touchRef = useRef<{
+    lastDist: number;
+    lastX: number;
+    lastY: number;
+    startScale: number;
+    startX: number;
+    startY: number;
+    isPinching: boolean;
+    isDragging: boolean;
+  }>({
+    lastDist: 0,
+    lastX: 0,
+    lastY: 0,
+    startScale: 1,
+    startX: 0,
+    startY: 0,
+    isPinching: false,
+    isDragging: false,
+  });
+
+  const openZoom = useCallback(() => {
+    setZoomScale(1);
+    setZoomPos({ x: 0, y: 0 });
+    setZoomOpen(true);
+  }, []);
+
+  const closeZoom = useCallback(() => {
+    setZoomOpen(false);
+    setZoomScale(1);
+    setZoomPos({ x: 0, y: 0 });
+  }, []);
+
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        touchRef.current.lastDist = Math.sqrt(dx * dx + dy * dy);
+        touchRef.current.startScale = zoomScale;
+        touchRef.current.isPinching = true;
+        touchRef.current.isDragging = false;
+      } else if (e.touches.length === 1 && zoomScale > 1) {
+        touchRef.current.lastX = e.touches[0].clientX;
+        touchRef.current.lastY = e.touches[0].clientY;
+        touchRef.current.startX = zoomPos.x;
+        touchRef.current.startY = zoomPos.y;
+        touchRef.current.isDragging = true;
+        touchRef.current.isPinching = false;
+      }
+    },
+    [zoomScale, zoomPos]
+  );
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (touchRef.current.isPinching && e.touches.length === 2) {
+        e.preventDefault();
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const ratio = dist / touchRef.current.lastDist;
+        const newScale = Math.max(1, Math.min(5, touchRef.current.startScale * ratio));
+        setZoomScale(newScale);
+      } else if (touchRef.current.isDragging && e.touches.length === 1 && zoomScale > 1) {
+        const dx = e.touches[0].clientX - touchRef.current.lastX;
+        const dy = e.touches[0].clientY - touchRef.current.lastY;
+        setZoomPos({
+          x: touchRef.current.startX + dx,
+          y: touchRef.current.startY + dy,
+        });
+      }
+    },
+    [zoomScale]
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    touchRef.current.isPinching = false;
+    touchRef.current.isDragging = false;
+    if (zoomScale <= 1.05) {
+      setZoomScale(1);
+      setZoomPos({ x: 0, y: 0 });
+    }
+  }, [zoomScale]);
+
+  const handleDoubleTap = useCallback(() => {
+    if (zoomScale > 1) {
+      setZoomScale(1);
+      setZoomPos({ x: 0, y: 0 });
+    } else {
+      setZoomScale(2.5);
+    }
+  }, [zoomScale]);
+
+  const doubleTapRef = useRef<number>(0);
+  const handleTap = useCallback(() => {
+    const now = Date.now();
+    if (now - doubleTapRef.current < 300) {
+      handleDoubleTap();
+    }
+    doubleTapRef.current = now;
+  }, [handleDoubleTap]);
 
   useEffect(() => {
     fetchData();
@@ -95,9 +201,9 @@ export default function NewsletterPage() {
           </div>
         </div>
 
-        {/* Page image */}
+        {/* Page image — tap to zoom */}
         <div className="px-2 py-3">
-          <div className="relative w-full">
+          <div className="relative w-full cursor-zoom-in" onClick={openZoom}>
             <Image
               src={pages[currentPage]}
               alt={`${selectedNl.title} - ${currentPage + 1}ページ`}
@@ -106,8 +212,110 @@ export default function NewsletterPage() {
               className="w-full h-auto rounded-lg shadow-lg"
               priority
             />
+            <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2.5 py-1 rounded-full flex items-center gap-1">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="7" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                <line x1="11" y1="8" x2="11" y2="14" />
+                <line x1="8" y1="11" x2="14" y2="11" />
+              </svg>
+              拡大
+            </div>
           </div>
         </div>
+
+        {/* Zoom Modal */}
+        {zoomOpen && (
+          <div
+            className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
+            style={{ touchAction: "none" }}
+          >
+            {/* Close button */}
+            <button
+              onClick={closeZoom}
+              className="absolute top-4 right-4 z-[110] bg-white/20 text-white w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold backdrop-blur-sm active:bg-white/40"
+            >
+              ✕
+            </button>
+
+            {/* Scale indicator */}
+            {zoomScale > 1.05 && (
+              <div className="absolute top-4 left-4 z-[110] bg-white/20 text-white text-xs px-3 py-1.5 rounded-full backdrop-blur-sm">
+                {Math.round(zoomScale * 100)}%
+              </div>
+            )}
+
+            {/* Hint */}
+            {zoomScale <= 1.05 && (
+              <div className="absolute bottom-6 left-0 right-0 text-center z-[110]">
+                <span className="text-white/70 text-xs bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm">
+                  ピンチで拡大 ・ ダブルタップでズーム
+                </span>
+              </div>
+            )}
+
+            {/* Zoomable image */}
+            <div
+              ref={zoomRef}
+              className="w-full h-full flex items-center justify-center overflow-hidden"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onClick={() => {
+                if (zoomScale <= 1.05) {
+                  handleTap();
+                }
+              }}
+            >
+              <div
+                style={{
+                  transform: `translate(${zoomPos.x}px, ${zoomPos.y}px) scale(${zoomScale})`,
+                  transition: touchRef.current.isPinching || touchRef.current.isDragging ? "none" : "transform 0.3s ease",
+                  transformOrigin: "center center",
+                }}
+                className="px-1"
+              >
+                <Image
+                  src={pages[currentPage]}
+                  alt={`${selectedNl.title} - ${currentPage + 1}ページ`}
+                  width={1200}
+                  height={850}
+                  className="w-full h-auto max-h-[85vh] object-contain"
+                  priority
+                />
+              </div>
+            </div>
+
+            {/* Page navigation in zoom mode */}
+            <div className="absolute bottom-16 left-0 right-0 flex items-center justify-center gap-6 z-[110]">
+              <button
+                onClick={() => {
+                  setCurrentPage(Math.max(0, currentPage - 1));
+                  setZoomScale(1);
+                  setZoomPos({ x: 0, y: 0 });
+                }}
+                disabled={currentPage === 0}
+                className="text-white/80 text-sm font-bold disabled:opacity-30 active:text-white"
+              >
+                ← 前
+              </button>
+              <span className="text-white/60 text-xs">
+                {currentPage + 1} / {pages.length}
+              </span>
+              <button
+                onClick={() => {
+                  setCurrentPage(Math.min(pages.length - 1, currentPage + 1));
+                  setZoomScale(1);
+                  setZoomPos({ x: 0, y: 0 });
+                }}
+                disabled={currentPage === pages.length - 1}
+                className="text-white/80 text-sm font-bold disabled:opacity-30 active:text-white"
+              >
+                次 →
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Page navigation */}
         <div className="flex items-center justify-center gap-4 px-4 pb-4">
