@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ExternalLink from "@/components/ExternalLink";
 import { fetchNews } from "@/lib/scrape-news";
 import { fetchBlog } from "@/lib/scrape-blog";
 import { events } from "@/lib/events";
@@ -223,9 +224,9 @@ function FeedCard({ item }: { item: FeedItem }) {
 
   if (item.url) {
     return (
-      <a href={item.url} target="_blank" rel="noopener noreferrer">
+      <ExternalLink href={item.url} title={item.title}>
         {content}
-      </a>
+      </ExternalLink>
     );
   }
 

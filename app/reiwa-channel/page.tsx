@@ -1,4 +1,5 @@
 import PageHeader from "@/components/PageHeader";
+import ExternalLink from "@/components/ExternalLink";
 import { fetchReiwaChannelVideos } from "@/lib/youtube";
 
 export const revalidate = 3600;
@@ -12,11 +13,10 @@ export default async function ReiwaChannelPage() {
 
       <div className="p-4 space-y-4">
         {videos.map((video) => (
-          <a
+          <ExternalLink
             key={video.id}
             href={`https://www.youtube.com/watch?v=${video.id}`}
-            target="_blank"
-            rel="noopener noreferrer"
+            title={video.title}
             className="block bg-white rounded-2xl overflow-hidden card-hover border border-pink-100/50"
           >
             {/* Thumbnail */}
@@ -53,19 +53,18 @@ export default async function ReiwaChannelPage() {
                 </p>
               )}
             </div>
-          </a>
+          </ExternalLink>
         ))}
       </div>
 
       <div className="text-center py-4">
-        <a
+        <ExternalLink
           href="https://www.youtube.com/@rie_iwanami"
-          target="_blank"
-          rel="noopener noreferrer"
+          title="令和歌謡チャンネル"
           className="text-sm text-pink-500 font-medium"
         >
           チャンネルをYouTubeで見る →
-        </a>
+        </ExternalLink>
       </div>
 
     </div>

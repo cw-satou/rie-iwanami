@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import ExternalLink from "@/components/ExternalLink";
 import { events, getEventById } from "@/lib/events";
 
 export function generateStaticParams() {
@@ -100,14 +101,13 @@ export default function EventDetailPage({
           <p className="text-xs text-gray-500 mb-2">
             お問い合わせはこちら
           </p>
-          <a
+          <ExternalLink
             href="https://www.top-color.jp/?cat=4"
-            target="_blank"
-            rel="noopener noreferrer"
+            title="ライブ情報"
             className="inline-block px-6 py-2 bg-pink-400 text-white font-bold rounded-full text-sm active:bg-pink-500"
           >
             事務所ライブ情報 →
-          </a>
+          </ExternalLink>
         </div>
 
         {/* Back to list */}

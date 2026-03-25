@@ -1,4 +1,5 @@
 import PageHeader from "@/components/PageHeader";
+import ExternalLink from "@/components/ExternalLink";
 import { fetchBlog } from "@/lib/scrape-blog";
 
 export const revalidate = 3600;
@@ -13,11 +14,10 @@ export default async function BlogPage() {
       <div className="p-4 space-y-3">
         {posts.length > 0 ? (
           posts.map((post, i) => (
-            <a
+            <ExternalLink
               key={i}
               href={post.url}
-              target="_blank"
-              rel="noopener noreferrer"
+              title={post.title}
               className="block bg-white rounded-2xl overflow-hidden card-hover border border-pink-100/50"
             >
               {post.thumbnail && (
@@ -42,7 +42,7 @@ export default async function BlogPage() {
                   続きを読む →
                 </span>
               </div>
-            </a>
+            </ExternalLink>
           ))
         ) : (
           <div className="text-center py-12">
@@ -54,14 +54,13 @@ export default async function BlogPage() {
       </div>
 
       <div className="text-center py-4">
-        <a
+        <ExternalLink
           href="https://ameblo.jp/rieiwanami/"
-          target="_blank"
-          rel="noopener noreferrer"
+          title="個人ブログ"
           className="text-sm text-pink-500 font-medium"
         >
           アメブロで見る →
-        </a>
+        </ExternalLink>
       </div>
 
     </div>

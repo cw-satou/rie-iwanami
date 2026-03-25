@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import PageHeader from "@/components/PageHeader";
+import ExternalLink from "@/components/ExternalLink";
 
 interface NewsletterPreview {
   id: string;
@@ -585,14 +586,13 @@ export default function NewsletterPage() {
 
             {/* Blog link */}
             <div className="mt-4 text-center">
-              <a
+              <ExternalLink
                 href="https://ameblo.jp/rieiwanami/entry-12892373282.html"
-                target="_blank"
-                rel="noopener noreferrer"
+                title="入会案内"
                 className="inline-block text-xs text-pink-500 underline"
               >
                 詳しくはブログの入会案内をご覧ください →
-              </a>
+              </ExternalLink>
             </div>
           </div>
         </div>

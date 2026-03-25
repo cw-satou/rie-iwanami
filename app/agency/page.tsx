@@ -1,4 +1,5 @@
 import PageHeader from "@/components/PageHeader";
+import ExternalLink from "@/components/ExternalLink";
 
 const agencyLinks = [
   {
@@ -44,11 +45,10 @@ export default function AgencyPage() {
         {/* Links to agency pages */}
         <div className="space-y-3">
           {agencyLinks.map((link) => (
-            <a
+            <ExternalLink
               key={link.url}
               href={link.url}
-              target="_blank"
-              rel="noopener noreferrer"
+              title={link.title}
               className="block bg-white rounded-2xl p-4 border border-pink-100/50 active:bg-pink-50 transition-colors"
             >
               <div className="flex items-center gap-4">
@@ -77,20 +77,19 @@ export default function AgencyPage() {
                   </svg>
                 </div>
               </div>
-            </a>
+            </ExternalLink>
           ))}
         </div>
 
         {/* Official site button */}
         <div className="text-center pt-2">
-          <a
+          <ExternalLink
             href="https://www.top-color.jp/"
-            target="_blank"
-            rel="noopener noreferrer"
+            title="トップ・カラー公式サイト"
             className="inline-block px-8 py-3 bg-pink-400 text-white font-bold rounded-full text-sm active:bg-pink-500"
           >
             トップ・カラー公式サイト →
-          </a>
+          </ExternalLink>
         </div>
       </div>
 

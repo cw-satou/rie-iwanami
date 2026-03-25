@@ -1,3 +1,4 @@
+import ExternalLink from "@/components/ExternalLink";
 import { NewsItem } from "@/lib/types";
 
 const tagClassMap: Record<string, string> = {
@@ -39,14 +40,13 @@ export default function NewsCard({ item }: { item: NewsItem }) {
 
   if (item.url) {
     return (
-      <a
+      <ExternalLink
         href={item.url}
-        target="_blank"
-        rel="noopener noreferrer"
+        title={item.title}
         className={className}
       >
         {content}
-      </a>
+      </ExternalLink>
     );
   }
 

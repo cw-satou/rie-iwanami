@@ -99,3 +99,13 @@ body {
   animation: shimmer 1.5s ease-in-out infinite;
   border-radius: 8px;
 }
+
+/* In-app browser loading bar */
+@keyframes loadingBar {
+  0% { width: 0; }
+  50% { width: 70%; }
+  100% { width: 95%; }
+}
+.animate-loading-bar {
+  animation: loadingBar 3s ease-out forwards;
+}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
+import ExternalLink from "@/components/ExternalLink";
 import NewsCard from "@/components/NewsCard";
 import { NewsItem } from "@/lib/types";
 
@@ -93,14 +94,13 @@ export default function NewsEventsPage() {
           )}
 
           <div className="text-center py-4">
-            <a
+            <ExternalLink
               href="https://www.tkma.co.jp/enka_news/iwanami.html"
-              target="_blank"
-              rel="noopener noreferrer"
+              title="徳間ジャパンニュース"
               className="text-sm text-pink-500 font-medium"
             >
               徳間ジャパン公式で見る →
-            </a>
+            </ExternalLink>
           </div>
         </div>
       )}
@@ -174,14 +174,13 @@ export default function NewsEventsPage() {
           )}
 
           <div className="text-center py-4">
-            <a
+            <ExternalLink
               href="https://www.top-color.jp/?cat=4"
-              target="_blank"
-              rel="noopener noreferrer"
+              title="ライブ情報"
               className="text-sm text-pink-500 font-medium"
             >
               事務所のライブ情報を見る →
-            </a>
+            </ExternalLink>
           </div>
         </div>
       )}
