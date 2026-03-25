@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "岩波理恵デジタルファンクラブ",
-  description: "岩波理恵 I♡Rie-Club デジタルファンクラブ公式アプリ",
+  title: "岩波理恵公式アプリ",
+  description: "岩波理恵 I♡Rie-Club 公式アプリ",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
