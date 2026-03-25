@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #E8A0B4;
+  --color-primary-dark: #C76B8A;
+  --color-bg: #FDF0F3;
+  --color-bg-light: #F5D5DD;
+  --color-text: #3a2a2e;
+  --color-text-muted: #7a6a6e;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "Noto Sans JP", sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* App container */
+.app-shell {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  background: var(--color-bg);
+  position: relative;
+  box-shadow: 0 0 40px rgba(200, 107, 138, 0.1);
+}
+
+/* Page transition */
+.page-enter {
+  animation: fadeSlideIn 0.3s ease forwards;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Tag styles */
+.tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+.tag-media { background: #e8d4f0; color: #6a3080; }
+.tag-event { background: #d4e8f0; color: #2a6080; }
+.tag-release { background: #d4f0e0; color: #2a7040; }
+.tag-other { background: #f0e8d4; color: #806a2a; }
+
+/* Gradient header */
+.header-gradient {
+  background: linear-gradient(160deg, #F0B8C8 0%, #E8A0B4 40%, #D48BA0 100%);
+}
+
+/* Card hover */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:active {
+  transform: scale(0.98);
+}
+
+/* Scrollbar hide */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Skeleton loading */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #f0d0d8 25%, #f8e0e8 50%, #f0d0d8 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
