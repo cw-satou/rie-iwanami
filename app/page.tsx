@@ -3,9 +3,6 @@ import BottomNav from "@/components/BottomNav";
 import { fetchNews } from "@/lib/scrape-news";
 import NewsCard from "@/components/NewsCard";
 
-// Artist photo from Tokuma Japan
-const ARTIST_PHOTO = "https://www.tkma.co.jp/files/topics/2276_ext_16_0.jpg";
-
 const menuItems = [
   { href: "/news", label: "最新ニュース", icon: "📰" },
   { href: "/events", label: "イベント情報", icon: "📅" },
@@ -28,36 +25,40 @@ export default async function HomePage() {
         </span>
       </div>
 
-      {/* Hero Header */}
-      <header className="header-gradient px-6 pt-2 pb-10 text-center relative">
-        <p className="text-white/80 text-[0.7rem] tracking-[0.2em] mb-3 font-medium">
-          IWANAMI RIE DIGITAL FAN CLUB
-        </p>
+      {/* Hero Header with Artist Photo */}
+      <header className="relative">
+        {/* Artist Photo - Large display */}
+        <div className="relative w-full aspect-[4/5] max-h-[480px] overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/artist-photo.jpg"
+            alt="岩波理恵"
+            className="w-full h-full object-cover object-top"
+            loading="eager"
+          />
+          {/* Gradient overlay at bottom */}
+          <div className="absolute inset-0 bg-gradient-to-t from-pink-400/90 via-pink-300/20 to-transparent" />
 
-        {/* Artist Photo */}
-        <div className="flex items-center justify-center gap-4 mb-2">
-          <div className="w-20 h-20 rounded-full overflow-hidden border-[3px] border-white/40 shadow-lg flex-shrink-0">
-            <img
-              src={ARTIST_PHOTO}
-              alt="岩波理恵"
-              className="w-full h-full object-cover object-top"
-              loading="eager"
-            />
-          </div>
-          <div className="text-left">
-            <h1 className="text-white text-2xl font-bold tracking-wide">
+          {/* Name overlay */}
+          <div className="absolute bottom-0 left-0 right-0 px-5 pb-8">
+            <p className="text-white/80 text-[0.65rem] tracking-[0.25em] mb-1 font-medium">
+              IWANAMI RIE DIGITAL FAN CLUB
+            </p>
+            <h1 className="text-white text-3xl font-bold tracking-wide drop-shadow-lg">
               岩波理恵
             </h1>
-            <p className="text-white/80 text-xs mt-0.5">Digital Fan Club</p>
+            <p className="text-white/85 text-xs mt-1 font-medium">
+              Digital Fan Club
+            </p>
           </div>
         </div>
 
         {/* Curved bottom edge */}
-        <div className="absolute bottom-0 left-0 right-0 h-5 bg-pink-50 rounded-t-[50%]" />
+        <div className="absolute -bottom-1 left-0 right-0 h-5 bg-pink-50 rounded-t-[50%]" />
       </header>
 
       {/* Menu Grid */}
-      <div className="px-4 -mt-1">
+      <div className="px-4 mt-2">
         <div className="grid grid-cols-2 gap-3">
           {menuItems.map((item) => (
             <Link

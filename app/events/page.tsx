@@ -1,34 +1,16 @@
 import PageHeader from "@/components/PageHeader";
 import BottomNav from "@/components/BottomNav";
 
-// Events data - in production, fetch from CMS or API
+// Events data - sorted newest first. In production, fetch from CMS or API
 const events = [
   {
-    month: "2月",
-    day: "11",
-    weekday: "火・祝",
-    name: "岩波理恵 バレンタインスペシャルライブ",
-    venue: "東京・日本橋三越本店 特設ステージ",
-    time: "①13:00〜 ②15:00〜",
-    note: "観覧無料・握手会あり",
-  },
-  {
-    month: "2月",
-    day: "23",
-    weekday: "日",
-    name: "「未来への坂道」発売記念サイン会",
-    venue: "大阪・なんばパークス 1F イベントスペース",
-    time: "14:00〜（先着100名様）",
-    note: "CDご購入の方対象",
-  },
-  {
-    month: "3月",
-    day: "8",
+    month: "4月",
+    day: "5",
     weekday: "土",
-    name: "岩波理恵 スプリングコンサート2026",
-    venue: "名古屋・中日劇場",
-    time: "開場 14:30 / 開演 15:00",
-    note: "全席指定 ¥6,500",
+    name: "春のファンクラブ会員限定イベント",
+    venue: "東京都内（詳細は会報にて）",
+    time: "未定",
+    note: "FC会員限定・要事前申込",
   },
   {
     month: "3月",
@@ -40,13 +22,31 @@ const events = [
     note: "観覧ハガキ応募制",
   },
   {
-    month: "4月",
-    day: "5",
+    month: "3月",
+    day: "8",
     weekday: "土",
-    name: "春のファンクラブ会員限定イベント",
-    venue: "東京都内（詳細は会報にて）",
-    time: "未定",
-    note: "FC会員限定・要事前申込",
+    name: "岩波理恵 スプリングコンサート2026",
+    venue: "名古屋・中日劇場",
+    time: "開場 14:30 / 開演 15:00",
+    note: "全席指定 ¥6,500",
+  },
+  {
+    month: "2月",
+    day: "23",
+    weekday: "日",
+    name: "「未来への坂道」発売記念サイン会",
+    venue: "大阪・なんばパークス 1F イベントスペース",
+    time: "14:00〜（先着100名様）",
+    note: "CDご購入の方対象",
+  },
+  {
+    month: "2月",
+    day: "11",
+    weekday: "火・祝",
+    name: "岩波理恵 バレンタインスペシャルライブ",
+    venue: "東京・日本橋三越本店 特設ステージ",
+    time: "①13:00〜 ②15:00〜",
+    note: "観覧無料・握手会あり",
   },
 ];
 

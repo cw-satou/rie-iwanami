@@ -56,9 +56,24 @@ export async function fetchNews(): Promise<NewsItem[]> {
       }
     }
 
-    return items;
+    // Sort by date descending (newest first)
+    return sortByDateDesc(items);
   } catch (error) {
     console.error("Failed to fetch news:", error);
     return [];
   }
+}
+
+function parseDate(dateStr: string): number {
+  // Handle formats: "2026年01月19日", "2026/01/19", "2026-01-19"
+  const normalized = dateStr
+    .replace(/年|月/g, "/")
+    .replace(/日/g, "")
+    .trim();
+  const ts = new Date(normalized).getTime();
+  return isNaN(ts) ? 0 : ts;
+}
+
+function sortByDateDesc(items: NewsItem[]): NewsItem[] {
+  return [...items].sort((a, b) => parseDate(b.date) - parseDate(a.date));
 }

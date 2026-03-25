@@ -44,7 +44,7 @@ export async function fetchBlog(): Promise<BlogPost[]> {
         }
       });
 
-      if (posts.length > 0) return posts;
+      if (posts.length > 0) return sortByDateDesc(posts);
     }
   } catch (e) {
     console.error("RSS fetch failed, trying HTML:", e);
@@ -91,11 +91,19 @@ export async function fetchBlog(): Promise<BlogPost[]> {
         }
       });
 
-    return posts;
+    return sortByDateDesc(posts);
   } catch (error) {
     console.error("Failed to fetch blog:", error);
     return [];
   }
+}
+
+function sortByDateDesc(posts: BlogPost[]): BlogPost[] {
+  return [...posts].sort((a, b) => {
+    const da = new Date(a.date.replace(/\//g, "-")).getTime() || 0;
+    const db = new Date(b.date.replace(/\//g, "-")).getTime() || 0;
+    return db - da;
+  });
 }
 
 function formatDate(dateStr: string): string {
