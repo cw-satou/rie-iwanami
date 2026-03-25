@@ -1,5 +1,4 @@
 import PageHeader from "@/components/PageHeader";
-import BottomNav from "@/components/BottomNav";
 
 const agencyLinks = [
   {
@@ -18,7 +17,7 @@ const agencyLinks = [
 
 export default function AgencyPage() {
   return (
-    <div className="pb-20 page-enter">
+    <div className="pb-6 page-enter">
       <PageHeader title="事務所情報" icon="🏢" />
 
       <div className="p-4 space-y-4">
@@ -95,7 +94,6 @@ export default function AgencyPage() {
         </div>
       </div>
 
-      <BottomNav />
     </div>
   );
 }

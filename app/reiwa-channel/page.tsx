@@ -1,5 +1,4 @@
 import PageHeader from "@/components/PageHeader";
-import BottomNav from "@/components/BottomNav";
 import { fetchReiwaChannelVideos } from "@/lib/youtube";
 
 export const revalidate = 3600;
@@ -8,7 +7,7 @@ export default async function ReiwaChannelPage() {
   const videos = await fetchReiwaChannelVideos();
 
   return (
-    <div className="pb-20 page-enter">
+    <div className="pb-6 page-enter">
       <PageHeader title="令和歌謡チャンネル" icon="📺" />
 
       <div className="p-4 space-y-4">
@@ -69,7 +68,6 @@ export default async function ReiwaChannelPage() {
         </a>
       </div>
 
-      <BottomNav />
     </div>
   );
 }

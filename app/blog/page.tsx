@@ -1,5 +1,4 @@
 import PageHeader from "@/components/PageHeader";
-import BottomNav from "@/components/BottomNav";
 import { fetchBlog } from "@/lib/scrape-blog";
 
 export const revalidate = 3600;
@@ -8,7 +7,7 @@ export default async function BlogPage() {
   const posts = await fetchBlog();
 
   return (
-    <div className="pb-20 page-enter">
+    <div className="pb-6 page-enter">
       <PageHeader title="個人ブログ" icon="📝" />
 
       <div className="p-4 space-y-3">
@@ -65,7 +64,6 @@ export default async function BlogPage() {
         </a>
       </div>
 
-      <BottomNav />
     </div>
   );
 }

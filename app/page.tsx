@@ -1,5 +1,4 @@
 import Link from "next/link";
-import BottomNav from "@/components/BottomNav";
 import { fetchNews } from "@/lib/scrape-news";
 import { fetchBlog } from "@/lib/scrape-blog";
 import { events } from "@/lib/events";
@@ -87,7 +86,7 @@ export default async function HomePage() {
   const latestFeed = feed.slice(0, 6);
 
   return (
-    <div className="pb-20 page-enter">
+    <div className="pb-6 page-enter">
       {/* Status Bar */}
       <div className="header-gradient px-4 py-2 text-center">
         <span className="text-white/90 text-xs font-medium tracking-wider">
@@ -183,7 +182,6 @@ export default async function HomePage() {
         </a>
       </footer>
 
-      <BottomNav />
     </div>
   );
 }

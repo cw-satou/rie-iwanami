@@ -34,10 +34,7 @@ body {
   box-shadow: 0 0 40px rgba(200, 107, 138, 0.1);
 }
 
-/* Bottom nav */
-.bottom-nav {
-  height: 64px;
-}
+
 
 /* Page transition */
 .page-enter {

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
-import BottomNav from "@/components/BottomNav";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -37,7 +36,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="pb-20 page-enter">
+    <div className="pb-6 page-enter">
       <PageHeader title="会員ログイン" />
 
       <div className="p-4">
@@ -98,7 +97,6 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <BottomNav />
     </div>
   );
 }

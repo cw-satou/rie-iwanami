@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
-import BottomNav from "@/components/BottomNav";
 import NewsCard from "@/components/NewsCard";
 import { NewsItem } from "@/lib/types";
 
@@ -44,7 +43,7 @@ export default function NewsEventsPage() {
   }, []);
 
   return (
-    <div className="pb-20 page-enter">
+    <div className="pb-6 page-enter">
       <PageHeader title="ニュース / イベント" icon="📰" />
 
       {/* Tab switcher */}
@@ -187,7 +186,6 @@ export default function NewsEventsPage() {
         </div>
       )}
 
-      <BottomNav />
     </div>
   );
 }

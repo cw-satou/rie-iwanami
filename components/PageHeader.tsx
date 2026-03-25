@@ -1,6 +1,4 @@
-"use client";
-
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface PageHeaderProps {
   title: string;
@@ -13,18 +11,16 @@ export default function PageHeader({
   icon,
   showBack = true,
 }: PageHeaderProps) {
-  const router = useRouter();
-
   return (
     <header className="header-gradient px-4 py-3 flex items-center gap-3 sticky top-0 z-40">
       {showBack && (
-        <button
-          onClick={() => router.back()}
+        <Link
+          href="/"
           className="text-white text-xl w-8 h-8 flex items-center justify-center rounded-full active:bg-white/20"
-          aria-label="戻る"
+          aria-label="ホームに戻る"
         >
           ←
-        </button>
+        </Link>
       )}
       {icon && <span className="text-xl">{icon}</span>}
       <h1 className="text-white font-bold text-base">{title}</h1>

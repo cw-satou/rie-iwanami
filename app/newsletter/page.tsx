@@ -4,7 +4,6 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import PageHeader from "@/components/PageHeader";
-import BottomNav from "@/components/BottomNav";
 
 interface NewsletterPreview {
   id: string;
@@ -167,14 +166,13 @@ export default function NewsletterPage() {
   // Loading state
   if (loading) {
     return (
-      <div className="pb-20">
+      <div className="pb-6">
         <PageHeader title="ファンクラブ会報" icon="📖" />
         <div className="p-4 space-y-3">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="h-32 skeleton rounded-2xl" />
           ))}
         </div>
-        <BottomNav />
       </div>
     );
   }
@@ -183,7 +181,7 @@ export default function NewsletterPage() {
   if (selectedNl && selectedNl.pages) {
     const pages = selectedNl.pages;
     return (
-      <div className="pb-20 page-enter">
+      <div className="pb-6 page-enter">
         <div className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-pink-100">
           <div className="flex items-center justify-between px-4 py-3">
             <button
@@ -373,14 +371,13 @@ export default function NewsletterPage() {
           </div>
         </div>
 
-        <BottomNav />
       </div>
     );
   }
 
   // Main newsletter list view
   return (
-    <div className="pb-20 page-enter">
+    <div className="pb-6 page-enter">
       <PageHeader title="ファンクラブ会報" icon="📖" />
 
       {loggedIn ? (
@@ -601,7 +598,6 @@ export default function NewsletterPage() {
         </div>
       )}
 
-      <BottomNav />
     </div>
   );
 }

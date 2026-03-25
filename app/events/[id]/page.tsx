@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { events, getEventById } from "@/lib/events";
-import BottomNav from "@/components/BottomNav";
 
 export function generateStaticParams() {
   return events.map((e) => ({ id: e.id }));
@@ -19,7 +18,7 @@ export default function EventDetailPage({
   }
 
   return (
-    <div className="pb-20 page-enter">
+    <div className="pb-6 page-enter">
       {/* Header */}
       <div className="header-gradient px-4 py-3">
         <div className="flex items-center gap-3">
@@ -122,7 +121,6 @@ export default function EventDetailPage({
         </div>
       </div>
 
-      <BottomNav />
     </div>
   );
 }
