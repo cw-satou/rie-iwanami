@@ -24,23 +24,42 @@ export default function NewsEventsPage() {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [loadingNews, setLoadingNews] = useState(true);
   const [loadingEvents, setLoadingEvents] = useState(true);
+  const [newsError, setNewsError] = useState(false);
+  const [eventsError, setEventsError] = useState(false);
 
-  useEffect(() => {
+  function loadNews() {
+    setLoadingNews(true);
+    setNewsError(false);
     fetch("/api/news")
       .then((res) => res.json())
       .then((data) => {
         setNews(data.news || data || []);
         setLoadingNews(false);
       })
-      .catch(() => setLoadingNews(false));
+      .catch(() => {
+        setNewsError(true);
+        setLoadingNews(false);
+      });
+  }
 
+  function loadEvents() {
+    setLoadingEvents(true);
+    setEventsError(false);
     fetch("/api/events")
       .then((res) => res.json())
       .then((data) => {
         setEvents(data.events || []);
         setLoadingEvents(false);
       })
-      .catch(() => setLoadingEvents(false));
+      .catch(() => {
+        setEventsError(true);
+        setLoadingEvents(false);
+      });
+  }
+
+  useEffect(() => {
+    loadNews();
+    loadEvents();
   }, []);
 
   return (
@@ -49,8 +68,11 @@ export default function NewsEventsPage() {
 
       {/* Tab switcher */}
       <div className="px-4 pt-2 pb-3">
-        <div className="flex bg-pink-100/60 rounded-full p-1">
+        <div role="tablist" className="flex bg-pink-100/60 rounded-full p-1">
           <button
+            role="tab"
+            aria-selected={activeTab === "news"}
+            aria-controls="panel-news"
             onClick={() => setActiveTab("news")}
             className={`flex-1 py-2 rounded-full text-sm font-bold transition-colors ${
               activeTab === "news"
@@ -61,6 +83,9 @@ export default function NewsEventsPage() {
             📰 ニュース
           </button>
           <button
+            role="tab"
+            aria-selected={activeTab === "events"}
+            aria-controls="panel-events"
             onClick={() => setActiveTab("events")}
             className={`flex-1 py-2 rounded-full text-sm font-bold transition-colors ${
               activeTab === "events"
@@ -75,7 +100,7 @@ export default function NewsEventsPage() {
 
       {/* News tab */}
       {activeTab === "news" && (
-        <div className="p-4 space-y-3">
+        <div id="panel-news" role="tabpanel" className="p-4 space-y-3">
           {loadingNews ? (
             [...Array(4)].map((_, i) => (
               <div key={i} className="h-24 skeleton rounded-2xl" />
@@ -85,11 +110,16 @@ export default function NewsEventsPage() {
           ) : (
             <div className="text-center py-12">
               <p className="text-gray-400 text-sm">
-                ニュースを取得できませんでした
+                {newsError ? "ニュースの取得に失敗しました" : "ニュースはありません"}
               </p>
-              <p className="text-gray-300 text-xs mt-2">
-                しばらくしてからお試しください
-              </p>
+              {newsError && (
+                <button
+                  onClick={loadNews}
+                  className="mt-3 px-5 py-2 text-sm text-pink-500 border border-pink-300 rounded-full active:bg-pink-50"
+                >
+                  再読み込み
+                </button>
+              )}
             </div>
           )}
 
@@ -107,7 +137,7 @@ export default function NewsEventsPage() {
 
       {/* Events tab */}
       {activeTab === "events" && (
-        <div className="p-4 space-y-3">
+        <div id="panel-events" role="tabpanel" className="p-4 space-y-3">
           {loadingEvents ? (
             [...Array(3)].map((_, i) => (
               <div key={i} className="h-32 skeleton rounded-2xl" />
@@ -168,8 +198,16 @@ export default function NewsEventsPage() {
           ) : (
             <div className="text-center py-12">
               <p className="text-gray-400 text-sm">
-                現在予定されているイベントはありません
+                {eventsError ? "イベントの取得に失敗しました" : "現在予定されているイベントはありません"}
               </p>
+              {eventsError && (
+                <button
+                  onClick={loadEvents}
+                  className="mt-3 px-5 py-2 text-sm text-pink-500 border border-pink-300 rounded-full active:bg-pink-50"
+                >
+                  再読み込み
+                </button>
+              )}
             </div>
           )}
 

@@ -14,6 +14,10 @@ export default function LoginPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (!memberNumber.trim() || !password.trim()) {
+      setError("会員番号とパスワードを入力してください");
+      return;
+    }
     setLoading(true);
 
     try {
@@ -73,7 +77,7 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div className="bg-red-50 text-red-600 text-sm px-4 py-2.5 rounded-xl">
+              <div role="alert" aria-live="polite" className="bg-red-50 text-red-600 text-sm px-4 py-2.5 rounded-xl">
                 {error}
               </div>
             )}

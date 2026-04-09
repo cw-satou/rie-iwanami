@@ -1,3 +1,4 @@
+import Image from "next/image";
 import PageHeader from "@/components/PageHeader";
 import ExternalLink from "@/components/ExternalLink";
 import { fetchBlog } from "@/lib/scrape-blog";
@@ -21,11 +22,13 @@ export default async function BlogPage() {
               className="block bg-white rounded-2xl overflow-hidden card-hover border border-pink-100/50"
             >
               {post.thumbnail && (
-                <div className="aspect-[2/1] bg-gray-100 overflow-hidden">
-                  <img
+                <div className="relative aspect-[2/1] bg-gray-100 overflow-hidden">
+                  <Image
                     src={post.thumbnail}
                     alt={post.title}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
+                    sizes="430px"
                     loading="lazy"
                   />
                 </div>

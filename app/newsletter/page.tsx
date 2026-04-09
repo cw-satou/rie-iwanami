@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useId } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import PageHeader from "@/components/PageHeader";
@@ -28,6 +28,8 @@ export default function NewsletterPage() {
   const [zoomScale, setZoomScale] = useState(1);
   const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
   const zoomRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const zoomDialogId = useId();
   const touchRef = useRef<{
     lastDist: number;
     lastX: number;
@@ -131,6 +133,23 @@ export default function NewsletterPage() {
     doubleTapRef.current = now;
   }, [handleDoubleTap]);
 
+  // Escapeキーでズームモーダルを閉じる
+  useEffect(() => {
+    if (!zoomOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeZoom();
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [zoomOpen, closeZoom]);
+
+  // ズームモーダルが開いたら閉じるボタンにフォーカス
+  useEffect(() => {
+    if (zoomOpen && closeButtonRef.current) {
+      closeButtonRef.current.focus();
+    }
+  }, [zoomOpen]);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -226,12 +245,20 @@ export default function NewsletterPage() {
         {/* Zoom Modal */}
         {zoomOpen && (
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={zoomDialogId}
             className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
             style={{ touchAction: "none" }}
           >
+            <span id={zoomDialogId} className="sr-only">
+              ページ拡大ビューア
+            </span>
             {/* Close button */}
             <button
+              ref={closeButtonRef}
               onClick={closeZoom}
+              aria-label="閉じる"
               className="absolute top-4 right-4 z-[110] bg-white/20 text-white w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold backdrop-blur-sm active:bg-white/40"
             >
               ✕

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import PageHeader from "@/components/PageHeader";
 import ExternalLink from "@/components/ExternalLink";
 import { fetchYouTubeVideos } from "@/lib/youtube";
@@ -21,10 +22,12 @@ export default async function YoutubePage() {
           >
             {/* Thumbnail */}
             <div className="relative aspect-video bg-gray-100">
-              <img
+              <Image
                 src={video.thumbnail}
                 alt={video.title}
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
+                sizes="430px"
                 loading="lazy"
               />
               {/* Play button overlay */}
