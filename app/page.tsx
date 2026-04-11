@@ -13,6 +13,8 @@ const menuItems: MenuItem[] = [
   { href: "/blog", label: "個人ブログ", icon: "📝" },
   { href: "/youtube", label: "歌唱動画", icon: "🎤" },
   { href: "/reiwa-channel", label: "Youtube", icon: "▶️" },
+  { href: "/newsletter", label: "ファンクラブ会報", icon: "📖" },
+  { href: "/agency", label: "事務所情報", icon: "🏢" },
 ];
 
 // Unified feed item
