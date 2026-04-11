@@ -114,9 +114,6 @@ export default async function HomePage() {
             <h1 className="text-white text-3xl font-bold tracking-wide drop-shadow-lg">
               岩波理恵
             </h1>
-            <p className="text-white/85 text-xs mt-1 font-medium">
-              Official App
-            </p>
           </div>
         </div>
 

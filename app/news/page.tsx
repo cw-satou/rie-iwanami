@@ -10,6 +10,7 @@ type Tab = "all" | "news" | "events";
 interface FeedItem {
   type: "news" | "event";
   title: string;
+  date?: string;
   url?: string;
 }
 
@@ -43,12 +44,14 @@ export default function NewsEventsPage() {
   }, []);
 
   const feed: FeedItem[] = [
-    ...news.map((n): FeedItem => ({ type: "news", title: n.title, url: n.url })),
-    ...events.map((e): FeedItem => ({ type: "event", title: e.title, url: e.url })),
+    ...news.map((n): FeedItem => ({ type: "news", title: n.title, date: n.date || undefined, url: n.url })),
+    ...events.map((e): FeedItem => ({ type: "event", title: e.title, date: e.date, url: e.url })),
   ];
 
   const filtered =
-    tab === "all" ? feed : feed.filter((f) => (tab === "news" ? f.type === "news" : f.type === "event"));
+    tab === "all"
+      ? feed
+      : feed.filter((f) => (tab === "news" ? f.type === "news" : f.type === "event"));
 
   const tabs: { key: Tab; label: string; count: number }[] = [
     { key: "all", label: "すべて", count: feed.length },
@@ -90,7 +93,7 @@ export default function NewsEventsPage() {
             <div key={i} className="h-20 skeleton rounded-2xl" />
           ))
         ) : filtered.length > 0 ? (
-          filtered.map((item, i) => (
+          filtered.map((item, i) =>
             item.url ? (
               <a
                 key={i}
@@ -102,11 +105,14 @@ export default function NewsEventsPage() {
                 <FeedRow item={item} />
               </a>
             ) : (
-              <div key={i} className="flex items-start gap-3 p-4 bg-white rounded-2xl border border-pink-100/50">
+              <div
+                key={i}
+                className="flex items-start gap-3 p-4 bg-white rounded-2xl border border-pink-100/50"
+              >
                 <FeedRow item={item} />
               </div>
             )
-          ))
+          )
         ) : (
           <div className="text-center py-12">
             <p className="text-gray-400 text-sm">
@@ -123,14 +129,7 @@ export default function NewsEventsPage() {
           </div>
         )}
 
-        <div className="flex flex-col items-center gap-2 py-4">
-          <ExternalLink
-            href="https://www.tkma.co.jp/enka_news/iwanami.html"
-            title="徳間ジャパンニュース"
-            className="text-sm text-pink-500 font-medium"
-          >
-            徳間ジャパン公式で見る →
-          </ExternalLink>
+        <div className="text-center py-4">
           <ExternalLink
             href="https://top-color.jp/?cat=121"
             title="岩波理恵イベント情報"
@@ -148,16 +147,31 @@ function FeedRow({ item }: { item: FeedItem }) {
   const isEvent = item.type === "event";
   return (
     <>
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${isEvent ? "bg-red-50" : "bg-blue-50"}`}>
+      <div
+        className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${
+          isEvent ? "bg-red-50" : "bg-blue-50"
+        }`}
+      >
         {isEvent ? "🎵" : "📰"}
       </div>
       <div className="flex-1 min-w-0">
-        <span className={`inline-block px-2 py-0.5 rounded-full text-[0.6rem] font-semibold mb-1 ${isEvent ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"}`}>
-          {isEvent ? "イベント" : "ニュース"}
-        </span>
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
+          <span
+            className={`inline-block px-2 py-0.5 rounded-full text-[0.6rem] font-semibold ${
+              isEvent ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"
+            }`}
+          >
+            {isEvent ? "イベント" : "ニュース"}
+          </span>
+          {item.date && (
+            <span className="text-xs text-gray-400">{item.date}</span>
+          )}
+        </div>
         <p className="text-sm font-medium leading-snug line-clamp-2">{item.title}</p>
         {item.url && (
-          <span className="text-xs text-pink-500 mt-1 inline-block">詳細を見る →</span>
+          <span className="text-xs text-pink-500 mt-1 inline-block">
+            詳細を見る →
+          </span>
         )}
       </div>
     </>

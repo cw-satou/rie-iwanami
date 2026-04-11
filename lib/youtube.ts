@@ -2,8 +2,8 @@ import { YouTubeVideo } from "./types";
 
 // Known video IDs for Iwanami Rie (singing videos / MVs)
 const KNOWN_VIDEOS = [
+  "FVk4d8it06A", // 月の鱗 MV (2024年12月)
   "j7K2oROq304", // 薔薇の化身 MV
-  "FVk4d8it06A", // 月の鱗 MV
   "maqTdh9KKBI", // 愛が眠るまで MV
   "LQCOiOrhupY", // こんな夜はせつなくて MV
   "-0NctQL236k", // いつも会いたくなる人
@@ -14,7 +14,7 @@ export const KNOWN_SHORTS: string[] = [
   // 例: "xxxxxxxxxxx",
 ];
 
-// Reiwa Kayo Channel videos (@rie_iwanami)
+// Reiwa Kayo Channel videos (@rie_iwanami) — 新しい順
 const REIWA_CHANNEL_VIDEOS = [
   "DeE121HEfgE", // 【カバー】残酷な天使のテーゼ/高橋洋子
   "ksON_PMqwgM", // 【お知らせ】トワイライトライブin浅草
@@ -25,37 +25,72 @@ const REIWA_CHANNEL_VIDEOS = [
   "39cHSHlfu0A", // 【カバー】メロディー/玉置浩二
 ];
 
+function sortByDate(videos: YouTubeVideo[]): YouTubeVideo[] {
+  return [...videos].sort((a, b) => {
+    if (!a.publishedAt) return 1;
+    if (!b.publishedAt) return -1;
+    return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+  });
+}
+
 export async function fetchYouTubeVideos(): Promise<YouTubeVideo[]> {
   const apiKey = process.env.YOUTUBE_API_KEY;
 
-  // If YouTube API key is available, use it
   if (apiKey) {
     try {
-      // Search for Iwanami Rie videos
       const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=岩波理恵&type=video&maxResults=12&order=date&key=${apiKey}`;
-      const res = await fetch(searchUrl, {
-        next: { revalidate: 3600 },
-      });
+      const res = await fetch(searchUrl, { next: { revalidate: 3600 } });
 
       if (res.ok) {
         const data = await res.json();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return data.items.map((item: any) => ({
+        const videos = data.items.map((item: any) => ({
           id: item.id.videoId,
           title: item.snippet.title,
-          thumbnail: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
+          thumbnail:
+            item.snippet.thumbnails.high?.url ||
+            item.snippet.thumbnails.medium?.url ||
+            item.snippet.thumbnails.default?.url,
           publishedAt: item.snippet.publishedAt,
           channelTitle: item.snippet.channelTitle,
         }));
+        return sortByDate(videos);
       }
     } catch (error) {
       console.error("YouTube API failed:", error);
     }
   }
 
-  // Fallback: use known video IDs with oEmbed/noembed for metadata
-  const videos: YouTubeVideo[] = [];
+  // Fallback: Videos API で publishedAt を取得（1リクエスト）
+  if (apiKey) {
+    try {
+      const ids = KNOWN_VIDEOS.join(",");
+      const res = await fetch(
+        `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${ids}&key=${apiKey}`,
+        { next: { revalidate: 86400 } }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const videos = data.items.map((item: any) => ({
+          id: item.id,
+          title: item.snippet.title,
+          thumbnail:
+            item.snippet.thumbnails.high?.url ||
+            item.snippet.thumbnails.medium?.url ||
+            item.snippet.thumbnails.default?.url,
+          publishedAt: item.snippet.publishedAt,
+          channelTitle: item.snippet.channelTitle,
+        }));
+        return sortByDate(videos);
+      }
+    } catch (error) {
+      console.error("YouTube Videos API failed:", error);
+    }
+  }
 
+  // 最終フォールバック: noembed（日付なし）
+  const videos: YouTubeVideo[] = [];
   for (const videoId of KNOWN_VIDEOS) {
     try {
       const res = await fetch(
@@ -73,7 +108,6 @@ export async function fetchYouTubeVideos(): Promise<YouTubeVideo[]> {
         });
       }
     } catch {
-      // Use basic info as fallback
       videos.push({
         id: videoId,
         title: `岩波理恵 - Video`,
@@ -83,7 +117,6 @@ export async function fetchYouTubeVideos(): Promise<YouTubeVideo[]> {
       });
     }
   }
-
   return videos;
 }
 
@@ -92,7 +125,6 @@ export async function fetchReiwaShorts(): Promise<YouTubeVideo[]> {
 
   if (apiKey) {
     try {
-      // Step 1: ハンドル @rie_iwanami からチャンネルIDを取得
       const channelRes = await fetch(
         `https://www.googleapis.com/youtube/v3/channels?part=id&forHandle=rie_iwanami&key=${apiKey}`,
         { next: { revalidate: 86400 } }
@@ -103,7 +135,6 @@ export async function fetchReiwaShorts(): Promise<YouTubeVideo[]> {
         const channelId = channelData.items?.[0]?.id;
 
         if (channelId) {
-          // Step 2: そのチャンネルの #shorts 動画を検索（60秒以下）
           const searchRes = await fetch(
             `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&q=%23shorts&type=video&videoDuration=short&maxResults=12&order=date&key=${apiKey}`,
             { next: { revalidate: 3600 } }
@@ -113,7 +144,7 @@ export async function fetchReiwaShorts(): Promise<YouTubeVideo[]> {
             const data = await searchRes.json();
             if (data.items?.length > 0) {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              return data.items.map((item: any) => ({
+              const videos = data.items.map((item: any) => ({
                 id: item.id.videoId,
                 title: item.snippet.title,
                 thumbnail:
@@ -123,6 +154,7 @@ export async function fetchReiwaShorts(): Promise<YouTubeVideo[]> {
                 publishedAt: item.snippet.publishedAt,
                 channelTitle: item.snippet.channelTitle,
               }));
+              return sortByDate(videos);
             }
           }
         }
@@ -132,7 +164,6 @@ export async function fetchReiwaShorts(): Promise<YouTubeVideo[]> {
     }
   }
 
-  // Fallback: KNOWN_SHORTS に登録されたIDを使用
   if (KNOWN_SHORTS.length === 0) return [];
 
   const videos: YouTubeVideo[] = [];
@@ -166,8 +197,40 @@ export async function fetchReiwaShorts(): Promise<YouTubeVideo[]> {
 }
 
 export async function fetchReiwaChannelVideos(): Promise<YouTubeVideo[]> {
-  const videos: YouTubeVideo[] = [];
+  const apiKey = process.env.YOUTUBE_API_KEY;
 
+  // YouTube Videos API で日付付きで取得
+  if (apiKey) {
+    try {
+      const ids = REIWA_CHANNEL_VIDEOS.join(",");
+      const res = await fetch(
+        `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${ids}&key=${apiKey}`,
+        { next: { revalidate: 3600 } }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (data.items?.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const videos = data.items.map((item: any) => ({
+            id: item.id,
+            title: item.snippet.title,
+            thumbnail:
+              item.snippet.thumbnails.high?.url ||
+              item.snippet.thumbnails.medium?.url ||
+              item.snippet.thumbnails.default?.url,
+            publishedAt: item.snippet.publishedAt,
+            channelTitle: item.snippet.channelTitle,
+          }));
+          return sortByDate(videos);
+        }
+      }
+    } catch (error) {
+      console.error("YouTube channel videos API failed:", error);
+    }
+  }
+
+  // フォールバック: noembed
+  const videos: YouTubeVideo[] = [];
   for (const videoId of REIWA_CHANNEL_VIDEOS) {
     try {
       const res = await fetch(
@@ -194,6 +257,5 @@ export async function fetchReiwaChannelVideos(): Promise<YouTubeVideo[]> {
       });
     }
   }
-
   return videos;
 }
