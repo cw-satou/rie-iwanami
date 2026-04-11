@@ -141,6 +141,7 @@ export async function verifyMemberCredentials(
 }
 
 export function toPublic(member: Member): MemberPublic {
-  const { passwordHash: _, ...pub } = member;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { passwordHash, ...pub } = member;
   return pub;
 }
