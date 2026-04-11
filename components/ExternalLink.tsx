@@ -1,7 +1,4 @@
-"use client";
-
-import { useState, ReactNode } from "react";
-import InAppBrowser from "./InAppBrowser";
+import { ReactNode } from "react";
 
 interface ExternalLinkProps {
   href: string;
@@ -10,30 +7,15 @@ interface ExternalLinkProps {
   children: ReactNode;
 }
 
-export default function ExternalLink({ href, title, className, children }: ExternalLinkProps) {
-  const [browserOpen, setBrowserOpen] = useState(false);
-
-  function handleClick(e: React.MouseEvent) {
-    e.preventDefault();
-    setBrowserOpen(true);
-  }
-
+export default function ExternalLink({ href, className, children }: ExternalLinkProps) {
   return (
-    <>
-      <a
-        href={href}
-        onClick={handleClick}
-        className={className}
-      >
-        {children}
-      </a>
-      {browserOpen && (
-        <InAppBrowser
-          url={href}
-          title={title}
-          onClose={() => setBrowserOpen(false)}
-        />
-      )}
-    </>
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={className}
+    >
+      {children}
+    </a>
   );
 }
