@@ -1,7 +1,6 @@
 import Link from "next/link"; // used for menu grid and "すべてのニュース" link
 import { fetchNews } from "@/lib/scrape-news";
 import { fetchBlog } from "@/lib/scrape-blog";
-import { events } from "@/lib/events";
 
 interface MenuItem {
   href: string;
@@ -10,7 +9,7 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { href: "/news", label: "ニュース / イベント", icon: "📰" },
+  { href: "/news", label: "ニュース", icon: "📰" },
   { href: "/youtube", label: "歌唱動画", icon: "🎤" },
   { href: "/reiwa-channel", label: "令和歌謡チャンネル", icon: "📺" },
   { href: "/blog", label: "個人ブログ", icon: "📝" },
@@ -20,7 +19,7 @@ const menuItems: MenuItem[] = [
 
 // Unified feed item
 interface FeedItem {
-  type: "news" | "event" | "blog";
+  type: "news" | "blog";
   date: string;
   sortDate: number;
   title: string;
@@ -51,19 +50,6 @@ export default async function HomePage() {
       icon: "📰",
       label: "ニュース",
       url: item.url,
-    });
-  }
-
-  // Add events
-  for (const event of events.slice(0, 3)) {
-    feed.push({
-      type: "event",
-      date: `${event.month}${event.day}日（${event.weekday}）`,
-      sortDate: parseEventDate(event.id),
-      title: event.name,
-      icon: "📅",
-      label: "イベント",
-      url: event.url || "https://www.top-color.jp/?cat=4",
     });
   }
 
@@ -139,7 +125,7 @@ export default async function HomePage() {
         </div>
       </div>
 
-      {/* Latest Feed (news + events + blog) */}
+      {/* Latest Feed (news + blog) */}
       <section className="px-4 mt-6">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-1 h-5 bg-pink-500 rounded-full" />
@@ -240,12 +226,3 @@ function parseDate(dateStr: string): number {
   return isNaN(d.getTime()) ? 0 : d.getTime();
 }
 
-function parseEventDate(eventId: string): number {
-  // Event IDs look like "2026-04-05-fc-event"
-  const match = eventId.match(/^(\d{4}-\d{2}-\d{2})/);
-  if (match) {
-    const d = new Date(match[1]);
-    return isNaN(d.getTime()) ? 0 : d.getTime();
-  }
-  return 0;
-}
