@@ -12,6 +12,7 @@ export interface EventItem {
 }
 
 // Events data - sorted newest first. In production, fetch from CMS or API
+// url: 情報の元ページ（事務所サイト）。個別ページがある場合はそのURLを設定する
 export const events: EventItem[] = [
   {
     id: "2026-04-05-fc-event",
@@ -24,6 +25,7 @@ export const events: EventItem[] = [
     note: "FC会員限定・要事前申込",
     description:
       "I♡Rie-Club会員の皆様だけの特別イベントです。詳しい場所やスケジュールは会報にてご案内いたします。会員の方は事前のお申し込みをお忘れなく！",
+    url: "https://www.top-color.jp/?cat=4",
   },
   {
     id: "2026-03-21-nhk",
@@ -36,6 +38,7 @@ export const events: EventItem[] = [
     note: "観覧ハガキ応募制",
     description:
       "NHK総合の音楽番組「歌謡プレミアム」の公開収録に出演いたします。観覧ご希望の方はハガキでのご応募が必要です。詳しくはNHK公式サイトをご確認ください。",
+    url: "https://www.top-color.jp/?cat=4",
   },
   {
     id: "2026-03-08-spring-concert",
@@ -48,6 +51,7 @@ export const events: EventItem[] = [
     note: "全席指定 ¥6,500",
     description:
       "春の名古屋公演です。「薔薇の化身」をはじめ、最新曲から懐かしの名曲まで、たっぷりとお届けします。全席指定¥6,500。お早めにお求めください。",
+    url: "https://www.top-color.jp/?cat=4",
   },
   {
     id: "2026-02-23-sign-event",
@@ -60,6 +64,7 @@ export const events: EventItem[] = [
     note: "CDご購入の方対象",
     description:
       "ニューシングル「未来への坂道」の発売を記念したサイン会を開催。CDをご購入いただいた方が対象です。先着100名様限定ですので、お早めにお越しください。",
+    url: "https://www.top-color.jp/?cat=4",
   },
   {
     id: "2026-02-11-valentine-live",
@@ -72,6 +77,7 @@ export const events: EventItem[] = [
     note: "観覧無料・握手会あり",
     description:
       "バレンタインの特別ライブ！日本橋三越本店の特設ステージにて、1日2回公演。観覧無料で、ライブ後の握手会もございます。お気軽にお越しください。",
+    url: "https://www.top-color.jp/?cat=4",
   },
 ];
 

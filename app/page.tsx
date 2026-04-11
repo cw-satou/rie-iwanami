@@ -1,5 +1,4 @@
-import Link from "next/link";
-import ExternalLink from "@/components/ExternalLink";
+import Link from "next/link"; // used for menu grid and "すべてのニュース" link
 import { fetchNews } from "@/lib/scrape-news";
 import { fetchBlog } from "@/lib/scrape-blog";
 import { events } from "@/lib/events";
@@ -28,7 +27,6 @@ interface FeedItem {
   icon: string;
   label: string;
   url?: string;
-  href?: string;
 }
 
 export const revalidate = 3600;
@@ -65,7 +63,7 @@ export default async function HomePage() {
       title: event.name,
       icon: "📅",
       label: "イベント",
-      href: `/events/${event.id}`,
+      url: event.url || "https://www.top-color.jp/?cat=4",
     });
   }
 
@@ -218,15 +216,11 @@ function FeedCard({ item }: { item: FeedItem }) {
     </div>
   );
 
-  if (item.href) {
-    return <Link href={item.href}>{content}</Link>;
-  }
-
   if (item.url) {
     return (
-      <ExternalLink href={item.url} title={item.title}>
+      <a href={item.url} target="_blank" rel="noopener noreferrer">
         {content}
-      </ExternalLink>
+      </a>
     );
   }
 
