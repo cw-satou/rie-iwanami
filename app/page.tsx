@@ -10,11 +10,9 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   { href: "/news", label: "ニュース", icon: "📰" },
-  { href: "/youtube", label: "歌唱動画", icon: "🎤" },
-  { href: "/reiwa-channel", label: "令和歌謡チャンネル", icon: "📺" },
   { href: "/blog", label: "個人ブログ", icon: "📝" },
-  { href: "/agency", label: "事務所情報", icon: "🏢" },
-  { href: "/newsletter", label: "ファンクラブ会報", icon: "📖" },
+  { href: "/youtube", label: "歌唱動画", icon: "🎤" },
+  { href: "/reiwa-channel", label: "Youtube", icon: "▶️" },
 ];
 
 // Unified feed item

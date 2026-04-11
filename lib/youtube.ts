@@ -9,6 +9,11 @@ const KNOWN_VIDEOS = [
   "-0NctQL236k", // いつも会いたくなる人
 ];
 
+// YouTube Shorts (@rie_iwanami) — ショート動画IDをここに追加してください
+export const KNOWN_SHORTS: string[] = [
+  // 例: "xxxxxxxxxxx",
+];
+
 // Reiwa Kayo Channel videos (@rie_iwanami)
 const REIWA_CHANNEL_VIDEOS = [
   "DeE121HEfgE", // 【カバー】残酷な天使のテーゼ/高橋洋子
@@ -79,6 +84,39 @@ export async function fetchYouTubeVideos(): Promise<YouTubeVideo[]> {
     }
   }
 
+  return videos;
+}
+
+export async function fetchReiwaShorts(): Promise<YouTubeVideo[]> {
+  if (KNOWN_SHORTS.length === 0) return [];
+
+  const videos: YouTubeVideo[] = [];
+  for (const videoId of KNOWN_SHORTS) {
+    try {
+      const res = await fetch(
+        `https://noembed.com/embed?url=https://www.youtube.com/shorts/${videoId}`,
+        { next: { revalidate: 86400 } }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        videos.push({
+          id: videoId,
+          title: data.title || "ショート動画",
+          thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+          publishedAt: "",
+          channelTitle: data.author_name || "岩波理恵の令和歌謡チャンネル",
+        });
+      }
+    } catch {
+      videos.push({
+        id: videoId,
+        title: "ショート動画",
+        thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+        publishedAt: "",
+        channelTitle: "岩波理恵の令和歌謡チャンネル",
+      });
+    }
+  }
   return videos;
 }
 
