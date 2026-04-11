@@ -1,10 +1,13 @@
 import { cookies } from "next/headers";
 import { MemberSession } from "./types";
 
-// Member credentials are read from the FC_MEMBERS environment variable.
-// Format (JSON string): FC_MEMBERS={"FC001":"password1","FC002":"password2"}
-// Falls back to demo credentials when the variable is not set (local dev only).
-function getMembers(): Record<string, string> {
+// ---------------------------------------------------------------------------
+// Fallback credentials for local dev / migration period
+// Read from FC_MEMBERS env var (JSON) or use hardcoded demo values.
+// Once members are registered via the admin panel, KV takes precedence.
+// ---------------------------------------------------------------------------
+
+function getFallbackMembers(): Record<string, string> {
   if (process.env.FC_MEMBERS) {
     try {
       return JSON.parse(process.env.FC_MEMBERS);
@@ -12,10 +15,7 @@ function getMembers(): Record<string, string> {
       console.error("FC_MEMBERS env var is not valid JSON");
     }
   }
-  return {
-    FC001: "iwanami2024",
-    FC002: "rieclub2024",
-  };
+  return { FC001: "iwanami2024", FC002: "rieclub2024" };
 }
 
 function generateToken(): string {
@@ -28,23 +28,21 @@ function generateToken(): string {
 }
 
 // ---------------------------------------------------------------------------
-// Session store
-// - Production (KV_REST_API_URL is set): Vercel KV — survives redeploys
-// - Local dev (no KV): in-memory fallback
+// Session store: Vercel KV when configured, in-memory otherwise
 // ---------------------------------------------------------------------------
 
 type SessionData = { memberNumber: string; expiresAt: number };
 
-const memSessions: Map<string, SessionData> = new Map();
+const memSessions = new Map<string, SessionData>();
 
 function isKVEnabled(): boolean {
   return Boolean(process.env.KV_REST_API_URL);
 }
 
 async function sessionSet(token: string, data: SessionData): Promise<void> {
+  const ttlSeconds = Math.ceil((data.expiresAt - Date.now()) / 1000);
   if (isKVEnabled()) {
     const { kv } = await import("@vercel/kv");
-    const ttlSeconds = Math.ceil((data.expiresAt - Date.now()) / 1000);
     await kv.set(`session:${token}`, data, { ex: ttlSeconds });
   } else {
     memSessions.set(token, data);
@@ -76,11 +74,16 @@ export async function login(
   memberNumber: string,
   password: string
 ): Promise<{ success: boolean; token?: string; error?: string }> {
-  const members = getMembers();
-  const storedPassword = members[memberNumber];
+  // 1. Check KV-based members first (hashed passwords, admin-managed)
+  const { verifyMemberCredentials } = await import("./members");
+  const kvValid = await verifyMemberCredentials(memberNumber, password);
 
-  if (!storedPassword || storedPassword !== password) {
-    return { success: false, error: "会員番号またはパスワードが正しくありません" };
+  if (!kvValid) {
+    // 2. Fall back to env var / hardcoded (plain-text, backward compat)
+    const fallback = getFallbackMembers();
+    if (!fallback[memberNumber] || fallback[memberNumber] !== password) {
+      return { success: false, error: "会員番号またはパスワードが正しくありません" };
+    }
   }
 
   const token = generateToken();
@@ -103,23 +106,15 @@ export async function login(
 export async function logout(): Promise<void> {
   const cookieStore = await cookies();
   const token = cookieStore.get("fc_session")?.value;
-  if (token) {
-    await sessionDelete(token);
-  }
-  cookieStore.set("fc_session", "", {
-    httpOnly: true,
-    maxAge: 0,
-    path: "/",
-  });
+  if (token) await sessionDelete(token);
+  cookieStore.set("fc_session", "", { httpOnly: true, maxAge: 0, path: "/" });
 }
 
 export async function getSession(): Promise<MemberSession> {
   const cookieStore = await cookies();
   const token = cookieStore.get("fc_session")?.value;
 
-  if (!token) {
-    return { memberNumber: "", loggedIn: false };
-  }
+  if (!token) return { memberNumber: "", loggedIn: false };
 
   const session = await sessionGet(token);
   if (!session || session.expiresAt < Date.now()) {
