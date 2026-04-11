@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import PageHeader from "@/components/PageHeader";
 import ExternalLink from "@/components/ExternalLink";
 import NewsCard from "@/components/NewsCard";
@@ -16,6 +15,7 @@ interface EventItem {
   venue: string;
   time: string;
   note: string;
+  url?: string;
 }
 
 export default function NewsEventsPage() {
@@ -144,9 +144,11 @@ export default function NewsEventsPage() {
             ))
           ) : events.length > 0 ? (
             events.map((event) => (
-              <Link
+              <a
                 key={event.id}
-                href={`/events/${event.id}`}
+                href={event.url || "https://www.top-color.jp/?cat=4"}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="block bg-white rounded-2xl p-4 border border-pink-100/50 active:bg-pink-50 transition-colors"
               >
                 <div className="flex gap-4">
@@ -193,7 +195,7 @@ export default function NewsEventsPage() {
                     </svg>
                   </div>
                 </div>
-              </Link>
+              </a>
             ))
           ) : (
             <div className="text-center py-12">

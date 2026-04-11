@@ -15,10 +15,11 @@ export default async function BlogPage() {
       <div className="p-4 space-y-3">
         {posts.length > 0 ? (
           posts.map((post, i) => (
-            <ExternalLink
+            <a
               key={i}
               href={post.url}
-              title={post.title}
+              target="_blank"
+              rel="noopener noreferrer"
               className="block bg-white rounded-2xl overflow-hidden card-hover border border-pink-100/50"
             >
               {post.thumbnail && (
@@ -45,7 +46,7 @@ export default async function BlogPage() {
                   続きを読む →
                 </span>
               </div>
-            </ExternalLink>
+            </a>
           ))
         ) : (
           <div className="text-center py-12">

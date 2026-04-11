@@ -14,10 +14,11 @@ export default async function YoutubePage() {
 
       <div className="p-4 space-y-4">
         {videos.map((video) => (
-          <ExternalLink
+          <a
             key={video.id}
             href={`https://www.youtube.com/watch?v=${video.id}`}
-            title={video.title}
+            target="_blank"
+            rel="noopener noreferrer"
             className="block bg-white rounded-2xl overflow-hidden card-hover border border-pink-100/50"
           >
             {/* Thumbnail */}
@@ -55,7 +56,7 @@ export default async function YoutubePage() {
                 </p>
               )}
             </div>
-          </ExternalLink>
+          </a>
         ))}
       </div>
 

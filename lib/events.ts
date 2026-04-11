@@ -8,6 +8,7 @@ export interface EventItem {
   time: string;
   note: string;
   description?: string;
+  url?: string; // 外部サイトURL（未設定の場合は事務所イベントページへ）
 }
 
 // Events data - sorted newest first. In production, fetch from CMS or API
