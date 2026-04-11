@@ -31,6 +31,12 @@ export interface Newsletter {
   pages: string[];
 }
 
+export interface EventItem {
+  title: string;
+  url: string;
+  date?: string;
+}
+
 export interface MemberSession {
   memberNumber: string;
   loggedIn: boolean;

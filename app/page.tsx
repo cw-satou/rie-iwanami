@@ -10,6 +10,7 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   { href: "/news", label: "ニュース", icon: "📰" },
+  { href: "/events", label: "イベント", icon: "🎵" },
   { href: "/blog", label: "個人ブログ", icon: "📝" },
   { href: "/youtube", label: "歌唱動画", icon: "🎤" },
   { href: "/reiwa-channel", label: "Youtube", icon: "▶️" },
@@ -107,14 +108,14 @@ export default async function HomePage() {
         <div className="absolute -bottom-1 left-0 right-0 h-5 bg-pink-50 rounded-t-[50%]" />
       </header>
 
-      {/* Menu Grid - 6 buttons (2 x 3) */}
+      {/* Menu Grid - 7 buttons (2 x 3 + 1 full width) */}
       <div className="px-4 mt-2">
         <div className="grid grid-cols-2 gap-3">
-          {menuItems.map((item) => (
+          {menuItems.map((item, idx) => (
             <Link
               key={item.href}
               href={item.href}
-              className="bg-white rounded-2xl p-4 flex flex-col items-center gap-1.5 card-hover border border-pink-100/50 active:bg-pink-50"
+              className={`bg-white rounded-2xl p-4 flex flex-col items-center gap-1.5 card-hover border border-pink-100/50 active:bg-pink-50${idx === menuItems.length - 1 && menuItems.length % 2 !== 0 ? " col-span-2" : ""}`}
             >
               <span className="text-2xl">{item.icon}</span>
               <span className="text-xs font-semibold text-gray-700 text-center leading-tight">
