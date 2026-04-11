@@ -10,8 +10,7 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { href: "/news", label: "ニュース", icon: "📰" },
-  { href: "/events", label: "イベント", icon: "🎵" },
+  { href: "/news", label: "ニュース・イベント", icon: "📰" },
   { href: "/blog", label: "個人ブログ", icon: "📝" },
   { href: "/youtube", label: "歌唱動画", icon: "🎤" },
   { href: "/reiwa-channel", label: "Youtube", icon: "▶️" },
