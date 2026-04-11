@@ -5,6 +5,17 @@ export default function LivePage() {
     <div className="pb-6 page-enter">
       <PageHeader title="ライブ配信" icon="📡" />
 
+      {/* Intro */}
+      <div className="px-4 pt-2 pb-1">
+        <div className="bg-pink-50 rounded-2xl p-4 border border-pink-100">
+          <p className="text-sm text-gray-600 leading-relaxed">
+            岩波理恵はライブ配信アプリ <span className="font-semibold text-pink-500">Pococha</span> で配信中！
+            フォローして最新のライブ情報をチェックしてください。
+            インタビュー記事では、配信を始めたきっかけや活動への想いが語られています。
+          </p>
+        </div>
+      </div>
+
       <div className="p-4 space-y-4">
         {/* Pococha profile */}
         <a

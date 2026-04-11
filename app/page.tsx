@@ -1,6 +1,7 @@
 import Link from "next/link"; // used for menu grid and "すべてのニュース" link
 import { fetchNews } from "@/lib/scrape-news";
 import { fetchBlog } from "@/lib/scrape-blog";
+import { fetchEvents } from "@/lib/scrape-events";
 
 interface MenuItem {
   href: string;
@@ -21,7 +22,7 @@ const menuItems: MenuItem[] = [
 
 // Unified feed item
 interface FeedItem {
-  type: "news" | "blog";
+  type: "news" | "blog" | "event";
   date: string;
   sortDate: number;
   title: string;
@@ -33,10 +34,11 @@ interface FeedItem {
 export const revalidate = 3600;
 
 export default async function HomePage() {
-  // Fetch news and blog in parallel
-  const [newsItems, blogPosts] = await Promise.all([
+  // Fetch news, blog, events in parallel
+  const [newsItems, blogPosts, eventItems] = await Promise.all([
     fetchNews(),
     fetchBlog(),
+    fetchEvents(),
   ]);
 
   // Build unified feed
@@ -55,6 +57,19 @@ export default async function HomePage() {
     });
   }
 
+  // Add events
+  for (const item of eventItems.slice(0, 4)) {
+    feed.push({
+      type: "event",
+      date: item.date ?? "",
+      sortDate: parseDate(item.date ?? ""),
+      title: item.title,
+      icon: "🎵",
+      label: "イベント",
+      url: item.url,
+    });
+  }
+
   // Add blog
   for (const post of blogPosts.slice(0, 3)) {
     feed.push({
@@ -68,9 +83,9 @@ export default async function HomePage() {
     });
   }
 
-  // Sort by date descending, take top 6
+  // Sort by date descending, take top 8
   feed.sort((a, b) => b.sortDate - a.sortDate);
-  const latestFeed = feed.slice(0, 6);
+  const latestFeed = feed.slice(0, 8);
 
   return (
     <div className="pb-6 page-enter">
@@ -185,7 +200,7 @@ export default async function HomePage() {
         </div>
       </div>
 
-      {/* Latest Feed (news + blog) */}
+      {/* Latest Feed (news + events + blog) */}
       <section className="px-4 mt-6">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-1 h-5 bg-pink-500 rounded-full" />
