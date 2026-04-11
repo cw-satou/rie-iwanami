@@ -37,12 +37,12 @@ type SessionData = { memberNumber: string; expiresAt: number };
 
 const memSessions: Map<string, SessionData> = new Map();
 
-function useKV(): boolean {
+function isKVEnabled(): boolean {
   return Boolean(process.env.KV_REST_API_URL);
 }
 
 async function sessionSet(token: string, data: SessionData): Promise<void> {
-  if (useKV()) {
+  if (isKVEnabled()) {
     const { kv } = await import("@vercel/kv");
     const ttlSeconds = Math.ceil((data.expiresAt - Date.now()) / 1000);
     await kv.set(`session:${token}`, data, { ex: ttlSeconds });
@@ -52,7 +52,7 @@ async function sessionSet(token: string, data: SessionData): Promise<void> {
 }
 
 async function sessionGet(token: string): Promise<SessionData | null> {
-  if (useKV()) {
+  if (isKVEnabled()) {
     const { kv } = await import("@vercel/kv");
     return kv.get<SessionData>(`session:${token}`);
   }
@@ -60,7 +60,7 @@ async function sessionGet(token: string): Promise<SessionData | null> {
 }
 
 async function sessionDelete(token: string): Promise<void> {
-  if (useKV()) {
+  if (isKVEnabled()) {
     const { kv } = await import("@vercel/kv");
     await kv.del(`session:${token}`);
   } else {
