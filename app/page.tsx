@@ -3,6 +3,7 @@ import { fetchNews } from "@/lib/scrape-news";
 import { fetchBlog } from "@/lib/scrape-blog";
 import { fetchEvents } from "@/lib/scrape-events";
 import InstallPrompt from "@/components/InstallPrompt";
+import LiveBanner from "@/components/LiveBanner";
 
 interface MenuItem {
   href: string;
@@ -196,6 +197,9 @@ export default async function HomePage() {
           </a>
         </div>
       </div>
+
+      {/* Live banner */}
+      <LiveBanner />
 
       {/* Install button */}
       <div className="px-4 mt-3">

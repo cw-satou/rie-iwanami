@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { getAdminSession } from "@/lib/admin-auth";
 import { getAllMembers, toPublic } from "@/lib/members";
+import { getLiveStatus } from "@/lib/live-status";
 import AdminMembersUI from "@/components/AdminMembersUI";
+import LiveToggle from "@/components/LiveToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +11,10 @@ export default async function AdminMembersPage() {
   const isAdmin = await getAdminSession();
   if (!isAdmin) redirect("/admin/login");
 
-  const members = await getAllMembers();
+  const [members, liveStatus] = await Promise.all([
+    getAllMembers(),
+    getLiveStatus(),
+  ]);
   const initialMembers = members.map(toPublic);
 
   return (
@@ -18,8 +23,7 @@ export default async function AdminMembersPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-xl font-bold text-gray-800">会員管理</h1>
-            <p className="text-sm text-gray-400 mt-0.5">{initialMembers.length}名登録中</p>
+            <h1 className="text-xl font-bold text-gray-800">管理画面</h1>
           </div>
           <form action="/api/admin/auth/logout" method="POST">
             <button
@@ -31,6 +35,18 @@ export default async function AdminMembersPage() {
           </form>
         </div>
 
+        {/* Live status toggle */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-6 shadow-sm">
+          <h2 className="text-base font-bold text-gray-700 mb-1">Pococha 配信ステータス</h2>
+          <p className="text-xs text-gray-400 mb-4">配信開始前にONにして、終了後にOFFにしてください</p>
+          <LiveToggle initialLive={liveStatus} />
+        </div>
+
+        {/* Members */}
+        <div className="mb-2">
+          <h2 className="text-base font-bold text-gray-700">会員管理</h2>
+          <p className="text-sm text-gray-400 mt-0.5">{initialMembers.length}名登録中</p>
+        </div>
         <AdminMembersUI initialMembers={initialMembers} />
       </div>
     </div>
