@@ -88,6 +88,51 @@ export async function fetchYouTubeVideos(): Promise<YouTubeVideo[]> {
 }
 
 export async function fetchReiwaShorts(): Promise<YouTubeVideo[]> {
+  const apiKey = process.env.YOUTUBE_API_KEY;
+
+  if (apiKey) {
+    try {
+      // Step 1: ハンドル @rie_iwanami からチャンネルIDを取得
+      const channelRes = await fetch(
+        `https://www.googleapis.com/youtube/v3/channels?part=id&forHandle=rie_iwanami&key=${apiKey}`,
+        { next: { revalidate: 86400 } }
+      );
+
+      if (channelRes.ok) {
+        const channelData = await channelRes.json();
+        const channelId = channelData.items?.[0]?.id;
+
+        if (channelId) {
+          // Step 2: そのチャンネルの #shorts 動画を検索（60秒以下）
+          const searchRes = await fetch(
+            `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&q=%23shorts&type=video&videoDuration=short&maxResults=12&order=date&key=${apiKey}`,
+            { next: { revalidate: 3600 } }
+          );
+
+          if (searchRes.ok) {
+            const data = await searchRes.json();
+            if (data.items?.length > 0) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              return data.items.map((item: any) => ({
+                id: item.id.videoId,
+                title: item.snippet.title,
+                thumbnail:
+                  item.snippet.thumbnails.high?.url ||
+                  item.snippet.thumbnails.medium?.url ||
+                  item.snippet.thumbnails.default?.url,
+                publishedAt: item.snippet.publishedAt,
+                channelTitle: item.snippet.channelTitle,
+              }));
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("YouTube Shorts API failed:", error);
+    }
+  }
+
+  // Fallback: KNOWN_SHORTS に登録されたIDを使用
   if (KNOWN_SHORTS.length === 0) return [];
 
   const videos: YouTubeVideo[] = [];
