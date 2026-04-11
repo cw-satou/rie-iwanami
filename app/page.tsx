@@ -2,6 +2,7 @@ import Link from "next/link"; // used for menu grid and "すべてのニュー�
 import { fetchNews } from "@/lib/scrape-news";
 import { fetchBlog } from "@/lib/scrape-blog";
 import { fetchEvents } from "@/lib/scrape-events";
+import InstallPrompt from "@/components/InstallPrompt";
 
 interface MenuItem {
   href: string;
@@ -194,6 +195,11 @@ export default async function HomePage() {
             <span className="text-[0.6rem] text-gray-500 font-medium">TikTok</span>
           </a>
         </div>
+      </div>
+
+      {/* Install button */}
+      <div className="px-4 mt-3">
+        <InstallPrompt />
       </div>
 
       {/* Latest Feed (news + events + blog) */}
