@@ -38,7 +38,7 @@ export default async function AdminMembersPage() {
         {/* Live status toggle */}
         <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-6 shadow-sm">
           <h2 className="text-base font-bold text-gray-700 mb-1">Pococha 配信ステータス</h2>
-          <p className="text-xs text-gray-400 mb-4">配信開始前にONにして、終了後にOFFにしてください</p>
+          <p className="text-xs text-gray-400 mb-4">配信状態は自動検出されます。検出できない場合は手動でONにしてください。ONにすると自動検出より優先されます。</p>
           <LiveToggle initialLive={liveStatus} />
         </div>
 
