@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { newsletters } from "@/lib/newsletter";
+import { getAllNewsletters } from "@/lib/newsletter-store";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   const session = await getSession();
+  const newsletters = await getAllNewsletters();
 
   if (!session.loggedIn) {
     // Return only cover images (first page) for non-members

@@ -2,7 +2,9 @@ import { redirect } from "next/navigation";
 import { getAdminSession } from "@/lib/admin-auth";
 import { getAllMembers, toPublic } from "@/lib/members";
 import { getLiveStatus } from "@/lib/live-status";
+import { getAllNewsletters } from "@/lib/newsletter-store";
 import AdminMembersUI from "@/components/AdminMembersUI";
+import AdminNewslettersUI from "@/components/AdminNewslettersUI";
 import LiveToggle from "@/components/LiveToggle";
 
 export const dynamic = "force-dynamic";
@@ -11,9 +13,10 @@ export default async function AdminMembersPage() {
   const isAdmin = await getAdminSession();
   if (!isAdmin) redirect("/admin/login");
 
-  const [members, liveStatus] = await Promise.all([
+  const [members, liveStatus, newsletters] = await Promise.all([
     getAllMembers(),
     getLiveStatus(),
+    getAllNewsletters(),
   ]);
   const initialMembers = members.map(toPublic);
 
@@ -48,6 +51,13 @@ export default async function AdminMembersPage() {
           <p className="text-sm text-gray-400 mt-0.5">{initialMembers.length}名登録中</p>
         </div>
         <AdminMembersUI initialMembers={initialMembers} />
+
+        {/* Newsletters */}
+        <div className="mt-8 mb-2">
+          <h2 className="text-base font-bold text-gray-700">会報管理</h2>
+          <p className="text-sm text-gray-400 mt-0.5">{newsletters.length}件登録中</p>
+        </div>
+        <AdminNewslettersUI initialNewsletters={newsletters} />
       </div>
     </div>
   );
