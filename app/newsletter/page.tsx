@@ -30,6 +30,15 @@ export default function NewsletterPage() {
   const zoomRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const zoomDialogId = useId();
+
+  // Swipe state for reader
+  const swipeRef = useRef<{ startX: number; startY: number; moved: boolean }>({
+    startX: 0,
+    startY: 0,
+    moved: false,
+  });
+
+  // Zoom touch state
   const touchRef = useRef<{
     lastDist: number;
     lastX: number;
@@ -115,6 +124,7 @@ export default function NewsletterPage() {
     }
   }, [zoomScale]);
 
+  const doubleTapRef = useRef<number>(0);
   const handleDoubleTap = useCallback(() => {
     if (zoomScale > 1) {
       setZoomScale(1);
@@ -124,7 +134,6 @@ export default function NewsletterPage() {
     }
   }, [zoomScale]);
 
-  const doubleTapRef = useRef<number>(0);
   const handleTap = useCallback(() => {
     const now = Date.now();
     if (now - doubleTapRef.current < 300) {
@@ -133,7 +142,6 @@ export default function NewsletterPage() {
     doubleTapRef.current = now;
   }, [handleDoubleTap]);
 
-  // Escapeキーでズームモーダルを閉じる
   useEffect(() => {
     if (!zoomOpen) return;
     const handler = (e: KeyboardEvent) => {
@@ -143,7 +151,6 @@ export default function NewsletterPage() {
     return () => document.removeEventListener("keydown", handler);
   }, [zoomOpen, closeZoom]);
 
-  // ズームモーダルが開いたら閉じるボタンにフォーカス
   useEffect(() => {
     if (zoomOpen && closeButtonRef.current) {
       closeButtonRef.current.focus();
@@ -183,66 +190,197 @@ export default function NewsletterPage() {
     }
   }
 
-  // Loading state
+  function goNext(pages: string[]) {
+    setCurrentPage((p: number) => Math.min(pages.length - 1, p + 1));
+  }
+
+  function goPrev() {
+    setCurrentPage((p: number) => Math.max(0, p - 1));
+  }
+
+  // ── Loading ──────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="pb-6">
         <PageHeader title="ファンクラブ会報" icon="📖" />
-        <div className="p-4 space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-32 skeleton rounded-2xl" />
+        <div className="p-4 grid grid-cols-2 gap-3">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="aspect-[3/4] skeleton rounded-2xl" />
           ))}
         </div>
       </div>
     );
   }
 
-  // Full-page reader view (members only)
+  // ── Reader view ──────────────────────────────────────────────
   if (selectedNl && selectedNl.pages) {
     const pages = selectedNl.pages;
+    const progress = ((currentPage + 1) / pages.length) * 100;
+
     return (
       <div className="pb-6 page-enter">
-        <div className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-pink-100">
+        {/* Sticky header */}
+        <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-pink-100">
           <div className="flex items-center justify-between px-4 py-3">
             <button
               onClick={() => setSelectedNl(null)}
-              className="flex items-center gap-1 text-sm text-pink-500 font-medium"
+              className="flex items-center gap-1.5 text-sm text-pink-500 font-medium"
             >
-              ← 戻る
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+              一覧
             </button>
-            <span className="text-sm font-bold">
-              {selectedNl.title}
+            <div className="text-center">
+              <p className="text-sm font-bold leading-tight">{selectedNl.vol}</p>
+              <p className="text-xs text-gray-400">{selectedNl.issue}</p>
+            </div>
+            <span className="text-sm font-mono text-gray-500 tabular-nums">
+              {currentPage + 1}<span className="text-gray-300">/{pages.length}</span>
             </span>
-            <span className="text-xs text-gray-400">
-              {currentPage + 1}/{pages.length}
-            </span>
+          </div>
+          {/* Progress bar */}
+          <div className="h-0.5 bg-pink-100">
+            <div
+              className="h-full bg-pink-400 transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
           </div>
         </div>
 
-        {/* Page image — tap to zoom */}
-        <div className="px-2 py-3">
-          <div className="relative w-full cursor-zoom-in" onClick={openZoom}>
+        {/* Page image */}
+        <div className="relative select-none">
+          <div
+            className="relative w-full cursor-zoom-in"
+            onTouchStart={(e) => {
+              if (e.touches.length === 1) {
+                swipeRef.current.startX = e.touches[0].clientX;
+                swipeRef.current.startY = e.touches[0].clientY;
+                swipeRef.current.moved = false;
+              }
+            }}
+            onTouchMove={(e) => {
+              const dx = Math.abs(e.touches[0].clientX - swipeRef.current.startX);
+              const dy = Math.abs(e.touches[0].clientY - swipeRef.current.startY);
+              if (dx > 8 || dy > 8) swipeRef.current.moved = true;
+            }}
+            onTouchEnd={(e) => {
+              if (swipeRef.current.moved) {
+                const dx = e.changedTouches[0].clientX - swipeRef.current.startX;
+                const dy = Math.abs(e.changedTouches[0].clientY - swipeRef.current.startY);
+                if (Math.abs(dx) > 50 && dy < 80) {
+                  if (dx < 0) goNext(pages);
+                  else goPrev();
+                }
+              }
+            }}
+            onClick={openZoom}
+          >
             <Image
               src={pages[currentPage]}
-              alt={`${selectedNl.title} - ${currentPage + 1}ページ`}
+              alt={`${selectedNl.title} ${currentPage + 1}ページ`}
               width={1200}
               height={850}
-              className="w-full h-auto rounded-lg shadow-lg"
+              className="w-full h-auto"
               priority
             />
-            <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2.5 py-1 rounded-full flex items-center gap-1">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            {/* Zoom hint */}
+            <div className="absolute bottom-3 right-3 bg-black/40 text-white text-xs px-2.5 py-1 rounded-full flex items-center gap-1 backdrop-blur-sm">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="7" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
                 <line x1="11" y1="8" x2="11" y2="14" />
                 <line x1="8" y1="11" x2="14" y2="11" />
               </svg>
-              拡大
+              タップで拡大
             </div>
           </div>
+
+          {/* Invisible left/right tap zones */}
+          <button
+            aria-label="前のページ"
+            onClick={(e) => { e.stopPropagation(); goPrev(); }}
+            disabled={currentPage === 0}
+            className="absolute left-0 top-0 h-full w-1/4 disabled:pointer-events-none"
+          />
+          <button
+            aria-label="次のページ"
+            onClick={(e) => { e.stopPropagation(); goNext(pages); }}
+            disabled={currentPage === pages.length - 1}
+            className="absolute right-0 top-0 h-full w-1/4 disabled:pointer-events-none"
+          />
         </div>
 
-        {/* Zoom Modal */}
+        {/* Navigation */}
+        <div className="flex items-center justify-between px-4 pt-3 pb-2">
+          <button
+            onClick={goPrev}
+            disabled={currentPage === 0}
+            className="flex items-center gap-1 px-4 py-2 rounded-full text-sm font-bold border border-pink-200 text-pink-500 disabled:opacity-30 disabled:cursor-not-allowed active:bg-pink-50"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            前
+          </button>
+
+          {/* Dot indicators — current page is wider pill */}
+          <div className="flex gap-1.5 flex-wrap justify-center max-w-[200px]">
+            {pages.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i)}
+                aria-label={`${i + 1}ページ`}
+                className={`rounded-full transition-all duration-200 ${
+                  i === currentPage
+                    ? "w-4 h-2.5 bg-pink-500"
+                    : "w-2.5 h-2.5 bg-pink-200"
+                }`}
+              />
+            ))}
+          </div>
+
+          <button
+            onClick={() => goNext(pages)}
+            disabled={currentPage === pages.length - 1}
+            className="flex items-center gap-1 px-4 py-2 rounded-full text-sm font-bold bg-pink-400 text-white disabled:opacity-30 disabled:cursor-not-allowed active:bg-pink-500"
+          >
+            次
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Thumbnail strip */}
+        <div className="px-4 pb-4 mt-1">
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {pages.map((page, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i)}
+                className={`flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                  i === currentPage
+                    ? "border-pink-500 opacity-100 scale-105"
+                    : "border-transparent opacity-50"
+                }`}
+              >
+                <Image
+                  src={page}
+                  alt={`${i + 1}ページ`}
+                  width={100}
+                  height={71}
+                  className="w-[72px] h-auto block"
+                />
+              </button>
+            ))}
+          </div>
+          <p className="text-center text-xs text-gray-300 mt-2">
+            左右スワイプでページを移動
+          </p>
+        </div>
+
+        {/* Zoom Modal — unchanged from original */}
         {zoomOpen && (
           <div
             role="dialog"
@@ -251,10 +389,7 @@ export default function NewsletterPage() {
             className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
             style={{ touchAction: "none" }}
           >
-            <span id={zoomDialogId} className="sr-only">
-              ページ拡大ビューア
-            </span>
-            {/* Close button */}
+            <span id={zoomDialogId} className="sr-only">ページ拡大ビューア</span>
             <button
               ref={closeButtonRef}
               onClick={closeZoom}
@@ -263,15 +398,11 @@ export default function NewsletterPage() {
             >
               ✕
             </button>
-
-            {/* Scale indicator */}
             {zoomScale > 1.05 && (
               <div className="absolute top-4 left-4 z-[110] bg-white/20 text-white text-xs px-3 py-1.5 rounded-full backdrop-blur-sm">
                 {Math.round(zoomScale * 100)}%
               </div>
             )}
-
-            {/* Hint */}
             {zoomScale <= 1.05 && (
               <div className="absolute bottom-6 left-0 right-0 text-center z-[110]">
                 <span className="text-white/70 text-xs bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm">
@@ -279,19 +410,13 @@ export default function NewsletterPage() {
                 </span>
               </div>
             )}
-
-            {/* Zoomable image */}
             <div
               ref={zoomRef}
               className="w-full h-full flex items-center justify-center overflow-hidden"
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
-              onClick={() => {
-                if (zoomScale <= 1.05) {
-                  handleTap();
-                }
-              }}
+              onClick={() => { if (zoomScale <= 1.05) handleTap(); }}
             >
               <div
                 style={{
@@ -303,7 +428,7 @@ export default function NewsletterPage() {
               >
                 <Image
                   src={pages[currentPage]}
-                  alt={`${selectedNl.title} - ${currentPage + 1}ページ`}
+                  alt={`${selectedNl.title} ${currentPage + 1}ページ`}
                   width={1200}
                   height={850}
                   className="w-full h-auto max-h-[85vh] object-contain"
@@ -311,29 +436,17 @@ export default function NewsletterPage() {
                 />
               </div>
             </div>
-
-            {/* Page navigation in zoom mode */}
             <div className="absolute bottom-16 left-0 right-0 flex items-center justify-center gap-6 z-[110]">
               <button
-                onClick={() => {
-                  setCurrentPage(Math.max(0, currentPage - 1));
-                  setZoomScale(1);
-                  setZoomPos({ x: 0, y: 0 });
-                }}
+                onClick={() => { setCurrentPage(Math.max(0, currentPage - 1)); setZoomScale(1); setZoomPos({ x: 0, y: 0 }); }}
                 disabled={currentPage === 0}
                 className="text-white/80 text-sm font-bold disabled:opacity-30 active:text-white"
               >
                 ← 前
               </button>
-              <span className="text-white/60 text-xs">
-                {currentPage + 1} / {pages.length}
-              </span>
+              <span className="text-white/60 text-xs">{currentPage + 1} / {pages.length}</span>
               <button
-                onClick={() => {
-                  setCurrentPage(Math.min(pages.length - 1, currentPage + 1));
-                  setZoomScale(1);
-                  setZoomPos({ x: 0, y: 0 });
-                }}
+                onClick={() => { setCurrentPage(Math.min(pages.length - 1, currentPage + 1)); setZoomScale(1); setZoomPos({ x: 0, y: 0 }); }}
                 disabled={currentPage === pages.length - 1}
                 className="text-white/80 text-sm font-bold disabled:opacity-30 active:text-white"
               >
@@ -342,181 +455,113 @@ export default function NewsletterPage() {
             </div>
           </div>
         )}
-
-        {/* Page navigation */}
-        <div className="flex items-center justify-center gap-4 px-4 pb-4">
-          <button
-            onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
-            disabled={currentPage === 0}
-            className="flex-1 max-w-[140px] py-2.5 rounded-full text-sm font-bold border border-pink-200 text-pink-500 disabled:opacity-30 disabled:cursor-not-allowed active:bg-pink-50"
-          >
-            ← 前のページ
-          </button>
-          <div className="flex gap-1.5">
-            {pages.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentPage(i)}
-                className={`w-2.5 h-2.5 rounded-full transition-colors ${
-                  i === currentPage ? "bg-pink-500" : "bg-pink-200"
-                }`}
-              />
-            ))}
-          </div>
-          <button
-            onClick={() =>
-              setCurrentPage(Math.min(pages.length - 1, currentPage + 1))
-            }
-            disabled={currentPage === pages.length - 1}
-            className="flex-1 max-w-[140px] py-2.5 rounded-full text-sm font-bold bg-pink-400 text-white disabled:opacity-30 disabled:cursor-not-allowed active:bg-pink-500"
-          >
-            次のページ →
-          </button>
-        </div>
-
-        {/* Thumbnail strip */}
-        <div className="px-4 pb-6">
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {pages.map((page, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentPage(i)}
-                className={`flex-shrink-0 rounded-lg overflow-hidden border-2 transition-colors ${
-                  i === currentPage
-                    ? "border-pink-500"
-                    : "border-transparent opacity-60"
-                }`}
-              >
-                <Image
-                  src={page}
-                  alt={`${i + 1}ページ`}
-                  width={100}
-                  height={71}
-                  className="w-[80px] h-auto"
-                />
-              </button>
-            ))}
-          </div>
-        </div>
-
       </div>
     );
   }
 
-  // Main newsletter list view
+  // ── List view ────────────────────────────────────────────────
   return (
     <div className="pb-6 page-enter">
       <PageHeader title="ファンクラブ会報" icon="📖" />
 
       {loggedIn ? (
-        /* ===== Logged in: Member view ===== */
-        <div className="p-4">
+        /* ===== Member view ===== */
+        <div className="px-4">
           {/* Member bar */}
-          <div className="bg-white rounded-2xl p-4 flex items-center justify-between mb-4 border border-pink-100/50">
+          <div className="flex items-center justify-between bg-white rounded-2xl px-4 py-3 mb-5 border border-pink-100/60">
             <div>
-              <p className="font-bold text-sm">会員番号: {memberNumber}</p>
-              <p className="text-xs text-gray-400">
-                ようこそ！会報をお楽しみください
-              </p>
+              <p className="text-xs text-gray-400">ログイン中</p>
+              <p className="font-bold text-sm text-gray-700">会員番号: {memberNumber}</p>
             </div>
             <button
               onClick={handleLogout}
-              className="px-4 py-1.5 border border-gray-200 rounded-full text-xs text-gray-500 active:bg-gray-50"
+              className="px-3 py-1.5 border border-gray-200 rounded-full text-xs text-gray-500 active:bg-gray-50"
             >
               ログアウト
             </button>
           </div>
 
           {/* Section header */}
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-1 h-5 bg-pink-500 rounded-full" />
-            <h2 className="text-base font-bold">会報バックナンバー</h2>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-1 h-5 bg-pink-500 rounded-full" />
+              <h2 className="text-base font-bold">バックナンバー</h2>
+            </div>
+            <span className="text-xs text-gray-400">{newsletters.length}冊</span>
           </div>
 
-          {/* Newsletter cards (member: clickable, full access) */}
-          <div className="space-y-4">
+          {/* 2-column grid */}
+          <div className="grid grid-cols-2 gap-3">
             {newsletters.map((nl) => (
               <button
                 key={nl.id}
                 onClick={() => openReader(nl)}
-                className="w-full bg-white rounded-2xl overflow-hidden border border-pink-100/50 text-left active:scale-[0.98] transition-transform"
+                className="bg-white rounded-2xl overflow-hidden border border-pink-100/50 text-left active:scale-[0.97] transition-transform shadow-sm"
               >
-                <div className="relative">
+                <div className="relative aspect-[3/4] overflow-hidden bg-gray-100">
                   <Image
                     src={nl.coverImage}
                     alt={nl.title}
-                    width={600}
-                    height={425}
-                    className="w-full h-auto"
+                    fill
+                    className="object-cover"
                   />
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                    <p className="text-white font-bold text-base drop-shadow">
-                      {nl.title}
-                    </p>
-                    <p className="text-white/80 text-xs mt-0.5">
-                      {nl.issue} ・ {nl.pages?.length || 0}ページ
-                    </p>
+                  <div className="absolute top-2 right-2 bg-black/50 text-white text-[10px] px-2 py-0.5 rounded-full backdrop-blur-sm">
+                    {nl.pages?.length || nl.totalPages || 0}P
                   </div>
                 </div>
-                <div className="p-3 flex items-center justify-between">
-                  <span className="text-sm text-pink-500 font-medium">
-                    📖 タップして読む
-                  </span>
-                  <span className="text-xs text-gray-400">
-                    {nl.pages?.length || 0}ページ
-                  </span>
+                <div className="p-2.5">
+                  <p className="text-[11px] text-pink-400 font-bold">{nl.vol}</p>
+                  <p className="text-xs font-semibold text-gray-800 leading-tight mt-0.5 line-clamp-2">
+                    {nl.title}
+                  </p>
+                  <p className="text-[10px] text-gray-400 mt-1">{nl.issue}</p>
                 </div>
               </button>
             ))}
           </div>
 
-          <p className="text-center text-xs text-gray-400 mt-6">
+          <p className="text-center text-xs text-gray-300 mt-6">
             今後も会報を更新予定です。お楽しみに！
           </p>
         </div>
       ) : (
-        /* ===== Not logged in: Cover preview + Membership info ===== */
-        <div className="p-4 space-y-4">
-          {/* Cover preview */}
-          {newsletters.map((nl) => (
-            <div
-              key={nl.id}
-              className="bg-white rounded-2xl overflow-hidden border border-pink-100/50"
-            >
-              <div className="relative">
-                <Image
-                  src={nl.coverImage}
-                  alt={nl.title}
-                  width={600}
-                  height={425}
-                  className="w-full h-auto"
-                />
-                {/* Blurred overlay on bottom half to tease */}
-                <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-white via-white/90 to-transparent flex items-end justify-center pb-4">
-                  <div className="text-center">
-                    <p className="text-sm font-bold text-gray-700">
-                      🔒 続きは会員限定
-                    </p>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      全{nl.totalPages}ページ
-                    </p>
+        /* ===== Non-member view ===== */
+        <div className="px-4 space-y-4">
+          {/* Cover preview grid */}
+          {newsletters.length > 0 && (
+            <div className="grid grid-cols-2 gap-3">
+              {newsletters.map((nl) => (
+                <div
+                  key={nl.id}
+                  className="bg-white rounded-2xl overflow-hidden border border-pink-100/50 shadow-sm"
+                >
+                  <div className="relative aspect-[3/4] overflow-hidden bg-gray-100">
+                    <Image
+                      src={nl.coverImage}
+                      alt={nl.title}
+                      fill
+                      className="object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-white/95 via-white/30 to-transparent flex flex-col items-center justify-end pb-3">
+                      <span className="text-lg">🔒</span>
+                      <p className="text-[10px] text-gray-500 font-medium">会員限定</p>
+                    </div>
+                  </div>
+                  <div className="p-2.5">
+                    <p className="text-[11px] text-pink-400 font-bold">{nl.vol}</p>
+                    <p className="text-[10px] text-gray-400">{nl.issue}</p>
                   </div>
                 </div>
-              </div>
-              <div className="p-3 text-center">
-                <p className="font-bold text-sm">{nl.title}</p>
-                <p className="text-xs text-gray-400">{nl.issue}</p>
-              </div>
+              ))}
             </div>
-          ))}
+          )}
 
           {/* Login CTA */}
-          <div className="bg-white rounded-2xl p-6 text-center border border-pink-100/50">
-            <h3 className="text-lg font-bold mb-2">📖 会員の方はこちら</h3>
-            <p className="text-sm text-gray-500 mb-4 leading-relaxed">
-              ログインしてバックナンバーを
-              <br />
-              すべてご覧ください。
+          <div className="bg-white rounded-2xl p-5 text-center border border-pink-100/50">
+            <p className="text-2xl mb-2">📖</p>
+            <h3 className="text-base font-bold mb-1">会員の方はこちら</h3>
+            <p className="text-xs text-gray-400 mb-4 leading-relaxed">
+              ログインしてバックナンバーを<br />すべてご覧ください。
             </p>
             <Link
               href="/login"
@@ -526,35 +571,29 @@ export default function NewsletterPage() {
             </Link>
           </div>
 
-          {/* ===== 入会案内セクション ===== */}
+          {/* Membership info */}
           <div className="bg-gradient-to-br from-pink-50 to-white rounded-2xl p-5 border border-pink-200/60">
-            <h3 className="text-center text-lg font-bold text-pink-600 mb-1">
+            <h3 className="text-center text-lg font-bold text-pink-600 mb-0.5">
               I♡Rie-Club 入会案内
             </h3>
             <p className="text-center text-xs text-gray-400 mb-4">
               岩波理恵オフィシャルファンクラブ
             </p>
 
-            {/* Pricing */}
             <div className="bg-white rounded-xl p-4 mb-4 border border-pink-100/50">
               <div className="flex items-center justify-around text-center">
                 <div>
                   <p className="text-xs text-gray-500 mb-1">入会金</p>
-                  <p className="text-2xl font-bold text-pink-600">
-                    ¥1,000
-                  </p>
+                  <p className="text-2xl font-bold text-pink-600">¥1,000</p>
                 </div>
                 <div className="w-px h-10 bg-pink-100" />
                 <div>
                   <p className="text-xs text-gray-500 mb-1">年会費</p>
-                  <p className="text-2xl font-bold text-pink-600">
-                    ¥4,000
-                  </p>
+                  <p className="text-2xl font-bold text-pink-600">¥4,000</p>
                 </div>
               </div>
             </div>
 
-            {/* Benefits */}
             <h4 className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1.5">
               <span className="text-pink-400">♡</span> 会員特典
             </h4>
@@ -576,15 +615,12 @@ export default function NewsletterPage() {
               ))}
             </ul>
 
-            {/* Contact info */}
             <div className="bg-pink-50 rounded-xl p-4 border border-pink-100/60">
               <h4 className="text-sm font-bold text-pink-600 mb-2 text-center">
                 お申し込み・お問い合わせ
               </h4>
               <div className="space-y-2 text-sm text-gray-600">
-                <p className="text-center font-medium">
-                  株式会社トップ・カラー
-                </p>
+                <p className="text-center font-medium">株式会社トップ・カラー</p>
                 <div className="flex items-center justify-center gap-2">
                   <span>📞</span>
                   <a href="tel:03-6272-4581" className="text-pink-600 font-bold">
@@ -593,25 +629,17 @@ export default function NewsletterPage() {
                 </div>
                 <div className="flex items-center justify-center gap-2">
                   <span>✉️</span>
-                  <a
-                    href="mailto:rie@top-color.jp"
-                    className="text-pink-600 font-bold"
-                  >
+                  <a href="mailto:rie@top-color.jp" className="text-pink-600 font-bold">
                     rie@top-color.jp
                   </a>
                 </div>
-                <p className="text-center text-xs text-gray-400">
-                  受付時間: 平日 11:00〜17:00
-                </p>
+                <p className="text-center text-xs text-gray-400">受付時間: 平日 11:00〜17:00</p>
                 <p className="text-center text-xs text-gray-400 leading-relaxed">
-                  メールの場合、3日経っても返信がない場合は
-                  <br />
-                  お電話にてお問い合わせください。
+                  メールの場合、3日経っても返信がない場合は<br />お電話にてお問い合わせください。
                 </p>
               </div>
             </div>
 
-            {/* Blog link */}
             <div className="mt-4 text-center">
               <ExternalLink
                 href="https://ameblo.jp/rieiwanami/entry-12892373282.html"
@@ -624,7 +652,6 @@ export default function NewsletterPage() {
           </div>
         </div>
       )}
-
     </div>
   );
 }
