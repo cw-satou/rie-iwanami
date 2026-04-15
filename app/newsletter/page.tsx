@@ -221,7 +221,8 @@ export default function NewsletterPage() {
       <div className="pb-6 page-enter">
         {/* Sticky header */}
         <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-pink-100">
-          <div className="flex items-center justify-between px-4 py-3">
+          {/* Row 1: back / title / page counter */}
+          <div className="flex items-center justify-between px-4 pt-3 pb-1">
             <button
               onClick={() => setSelectedNl(null)}
               className="flex items-center gap-1.5 text-sm text-pink-500 font-medium"
@@ -239,12 +240,34 @@ export default function NewsletterPage() {
               {currentPage + 1}<span className="text-gray-300">/{pages.length}</span>
             </span>
           </div>
-          {/* Progress bar */}
-          <div className="h-0.5 bg-pink-100">
-            <div
-              className="h-full bg-pink-400 transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
+          {/* Row 2: prev — progress bar — next */}
+          <div className="flex items-center gap-2 px-3 pb-2">
+            <button
+              onClick={goPrev}
+              disabled={currentPage === 0}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border border-pink-200 text-pink-500 disabled:opacity-30 disabled:cursor-not-allowed active:bg-pink-50 flex-shrink-0"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+              前
+            </button>
+            <div className="flex-1 h-1.5 bg-pink-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-pink-400 rounded-full transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <button
+              onClick={() => goNext(pages)}
+              disabled={currentPage === pages.length - 1}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold bg-pink-400 text-white disabled:opacity-30 disabled:cursor-not-allowed active:bg-pink-500 flex-shrink-0"
+            >
+              次
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -296,60 +319,6 @@ export default function NewsletterPage() {
             </div>
           </div>
 
-          {/* Invisible left/right tap zones */}
-          <button
-            aria-label="前のページ"
-            onClick={(e) => { e.stopPropagation(); goPrev(); }}
-            disabled={currentPage === 0}
-            className="absolute left-0 top-0 h-full w-1/4 disabled:pointer-events-none"
-          />
-          <button
-            aria-label="次のページ"
-            onClick={(e) => { e.stopPropagation(); goNext(pages); }}
-            disabled={currentPage === pages.length - 1}
-            className="absolute right-0 top-0 h-full w-1/4 disabled:pointer-events-none"
-          />
-        </div>
-
-        {/* Navigation */}
-        <div className="flex items-center justify-between px-4 pt-3 pb-2">
-          <button
-            onClick={goPrev}
-            disabled={currentPage === 0}
-            className="flex items-center gap-1 px-4 py-2 rounded-full text-sm font-bold border border-pink-200 text-pink-500 disabled:opacity-30 disabled:cursor-not-allowed active:bg-pink-50"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-            前
-          </button>
-
-          {/* Dot indicators — current page is wider pill */}
-          <div className="flex gap-1.5 flex-wrap justify-center max-w-[200px]">
-            {pages.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentPage(i)}
-                aria-label={`${i + 1}ページ`}
-                className={`rounded-full transition-all duration-200 ${
-                  i === currentPage
-                    ? "w-4 h-2.5 bg-pink-500"
-                    : "w-2.5 h-2.5 bg-pink-200"
-                }`}
-              />
-            ))}
-          </div>
-
-          <button
-            onClick={() => goNext(pages)}
-            disabled={currentPage === pages.length - 1}
-            className="flex items-center gap-1 px-4 py-2 rounded-full text-sm font-bold bg-pink-400 text-white disabled:opacity-30 disabled:cursor-not-allowed active:bg-pink-500"
-          >
-            次
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </button>
         </div>
 
         {/* Thumbnail strip */}
@@ -390,19 +359,42 @@ export default function NewsletterPage() {
             style={{ touchAction: "none" }}
           >
             <span id={zoomDialogId} className="sr-only">ページ拡大ビューア</span>
-            <button
-              ref={closeButtonRef}
-              onClick={closeZoom}
-              aria-label="閉じる"
-              className="absolute top-4 right-4 z-[110] bg-white/20 text-white w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold backdrop-blur-sm active:bg-white/40"
-            >
-              ✕
-            </button>
-            {zoomScale > 1.05 && (
-              <div className="absolute top-4 left-4 z-[110] bg-white/20 text-white text-xs px-3 py-1.5 rounded-full backdrop-blur-sm">
-                {Math.round(zoomScale * 100)}%
+
+            {/* Top bar: close / prev / counter+scale / next */}
+            <div className="absolute top-0 left-0 right-0 z-[110] flex items-center justify-between px-4 py-3 bg-black/40 backdrop-blur-sm">
+              <button
+                ref={closeButtonRef}
+                onClick={closeZoom}
+                aria-label="閉じる"
+                className="bg-white/20 text-white w-9 h-9 rounded-full flex items-center justify-center text-base font-bold active:bg-white/40"
+              >
+                ✕
+              </button>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => { setCurrentPage(Math.max(0, currentPage - 1)); setZoomScale(1); setZoomPos({ x: 0, y: 0 }); }}
+                  disabled={currentPage === 0}
+                  className="text-white/80 text-sm font-bold disabled:opacity-30 active:text-white px-2 py-1"
+                >
+                  ← 前
+                </button>
+                <div className="text-center">
+                  <span className="text-white text-sm tabular-nums">{currentPage + 1}<span className="text-white/50">/{pages.length}</span></span>
+                  {zoomScale > 1.05 && (
+                    <span className="text-white/60 text-xs ml-2">{Math.round(zoomScale * 100)}%</span>
+                  )}
+                </div>
+                <button
+                  onClick={() => { setCurrentPage(Math.min(pages.length - 1, currentPage + 1)); setZoomScale(1); setZoomPos({ x: 0, y: 0 }); }}
+                  disabled={currentPage === pages.length - 1}
+                  className="text-white/80 text-sm font-bold disabled:opacity-30 active:text-white px-2 py-1"
+                >
+                  次 →
+                </button>
               </div>
-            )}
+              <div className="w-9" />{/* spacer to balance close button */}
+            </div>
+
             {zoomScale <= 1.05 && (
               <div className="absolute bottom-6 left-0 right-0 text-center z-[110]">
                 <span className="text-white/70 text-xs bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm">
@@ -435,23 +427,6 @@ export default function NewsletterPage() {
                   priority
                 />
               </div>
-            </div>
-            <div className="absolute bottom-16 left-0 right-0 flex items-center justify-center gap-6 z-[110]">
-              <button
-                onClick={() => { setCurrentPage(Math.max(0, currentPage - 1)); setZoomScale(1); setZoomPos({ x: 0, y: 0 }); }}
-                disabled={currentPage === 0}
-                className="text-white/80 text-sm font-bold disabled:opacity-30 active:text-white"
-              >
-                ← 前
-              </button>
-              <span className="text-white/60 text-xs">{currentPage + 1} / {pages.length}</span>
-              <button
-                onClick={() => { setCurrentPage(Math.min(pages.length - 1, currentPage + 1)); setZoomScale(1); setZoomPos({ x: 0, y: 0 }); }}
-                disabled={currentPage === pages.length - 1}
-                className="text-white/80 text-sm font-bold disabled:opacity-30 active:text-white"
-              >
-                次 →
-              </button>
             </div>
           </div>
         )}
