@@ -361,38 +361,44 @@ export default function NewsletterPage() {
             <span id={zoomDialogId} className="sr-only">ページ拡大ビューア</span>
 
             {/* Top bar: close / prev / counter+scale / next */}
-            <div className="absolute top-0 left-0 right-0 z-[110] flex items-center justify-between px-4 py-3 bg-black/40 backdrop-blur-sm">
+            <div className="absolute top-0 left-0 right-0 z-[110] flex items-center justify-between px-4 py-3 bg-black/60 backdrop-blur-sm">
               <button
                 ref={closeButtonRef}
                 onClick={closeZoom}
                 aria-label="閉じる"
-                className="bg-white/20 text-white w-9 h-9 rounded-full flex items-center justify-center text-base font-bold active:bg-white/40"
+                className="bg-white/20 text-white w-10 h-10 rounded-full flex items-center justify-center text-base font-bold active:bg-white/40"
               >
                 ✕
               </button>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <button
                   onClick={() => { setCurrentPage(Math.max(0, currentPage - 1)); setZoomScale(1); setZoomPos({ x: 0, y: 0 }); }}
                   disabled={currentPage === 0}
-                  className="text-white/80 text-sm font-bold disabled:opacity-30 active:text-white px-2 py-1"
+                  className="bg-white/20 text-white h-10 px-4 rounded-full flex items-center gap-1.5 text-sm font-bold disabled:opacity-30 active:bg-white/40"
                 >
-                  ← 前
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="15 18 9 12 15 6" />
+                  </svg>
+                  前
                 </button>
-                <div className="text-center">
-                  <span className="text-white text-sm tabular-nums">{currentPage + 1}<span className="text-white/50">/{pages.length}</span></span>
+                <div className="text-center min-w-[48px]">
+                  <span className="text-white text-sm font-mono tabular-nums">{currentPage + 1}<span className="text-white/50">/{pages.length}</span></span>
                   {zoomScale > 1.05 && (
-                    <span className="text-white/60 text-xs ml-2">{Math.round(zoomScale * 100)}%</span>
+                    <p className="text-white/60 text-[10px] leading-none mt-0.5">{Math.round(zoomScale * 100)}%</p>
                   )}
                 </div>
                 <button
                   onClick={() => { setCurrentPage(Math.min(pages.length - 1, currentPage + 1)); setZoomScale(1); setZoomPos({ x: 0, y: 0 }); }}
                   disabled={currentPage === pages.length - 1}
-                  className="text-white/80 text-sm font-bold disabled:opacity-30 active:text-white px-2 py-1"
+                  className="bg-white/20 text-white h-10 px-4 rounded-full flex items-center gap-1.5 text-sm font-bold disabled:opacity-30 active:bg-white/40"
                 >
-                  次 →
+                  次
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
                 </button>
               </div>
-              <div className="w-9" />{/* spacer to balance close button */}
+              <div className="w-10" />{/* spacer to balance close button */}
             </div>
 
             {zoomScale <= 1.05 && (
