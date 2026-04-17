@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback, useId } from "react";
+import { useEffect, useState, useRef, useCallback, useId, FormEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import PageHeader from "@/components/PageHeader";
@@ -30,6 +30,15 @@ export default function NewsletterPage() {
   const zoomRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const zoomDialogId = useId();
+
+  // Password change form state
+  const [showPwForm, setShowPwForm] = useState(false);
+  const [pwCurrent, setPwCurrent] = useState("");
+  const [pwNew, setPwNew] = useState("");
+  const [pwConfirm, setPwConfirm] = useState("");
+  const [pwLoading, setPwLoading] = useState(false);
+  const [pwError, setPwError] = useState<string | null>(null);
+  const [pwSuccess, setPwSuccess] = useState(false);
 
   // Swipe state for reader
   const swipeRef = useRef<{ startX: number; startY: number; moved: boolean }>({
@@ -172,6 +181,37 @@ export default function NewsletterPage() {
       console.error(e);
     }
     setLoading(false);
+  }
+
+  async function handleChangePassword(e: FormEvent) {
+    e.preventDefault();
+    setPwError(null);
+    if (pwNew !== pwConfirm) {
+      setPwError("新しいパスワードと確認用パスワードが一致しません");
+      return;
+    }
+    setPwLoading(true);
+    try {
+      const res = await fetch("/api/member/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: pwCurrent, newPassword: pwNew }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "エラーが発生しました");
+      setPwSuccess(true);
+      setPwCurrent("");
+      setPwNew("");
+      setPwConfirm("");
+      setTimeout(() => {
+        setPwSuccess(false);
+        setShowPwForm(false);
+      }, 2000);
+    } catch (err: unknown) {
+      setPwError(err instanceof Error ? err.message : "エラーが発生しました");
+    } finally {
+      setPwLoading(false);
+    }
   }
 
   async function handleLogout() {
@@ -449,17 +489,87 @@ export default function NewsletterPage() {
         /* ===== Member view ===== */
         <div className="px-4">
           {/* Member bar */}
-          <div className="flex items-center justify-between bg-white rounded-2xl px-4 py-3 mb-5 border border-pink-100/60">
-            <div>
-              <p className="text-xs text-gray-400">ログイン中</p>
-              <p className="font-bold text-sm text-gray-700">会員番号: {memberNumber}</p>
+          <div className="bg-white rounded-2xl px-4 py-3 mb-5 border border-pink-100/60">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-400">ログイン中</p>
+                <p className="font-bold text-sm text-gray-700">会員番号: {memberNumber}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => { setShowPwForm((v: boolean) => !v); setPwError(null); setPwSuccess(false); }}
+                  className="px-3 py-1.5 border border-gray-200 rounded-full text-xs text-gray-500 active:bg-gray-50"
+                >
+                  パスワード変更
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="px-3 py-1.5 border border-gray-200 rounded-full text-xs text-gray-500 active:bg-gray-50"
+                >
+                  ログアウト
+                </button>
+              </div>
             </div>
-            <button
-              onClick={handleLogout}
-              className="px-3 py-1.5 border border-gray-200 rounded-full text-xs text-gray-500 active:bg-gray-50"
-            >
-              ログアウト
-            </button>
+
+            {/* Password change form */}
+            {showPwForm && (
+              <form onSubmit={handleChangePassword} className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+                {pwError && (
+                  <p className="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2">{pwError}</p>
+                )}
+                {pwSuccess && (
+                  <p className="text-xs text-green-600 bg-green-50 rounded-lg px-3 py-2">パスワードを変更しました</p>
+                )}
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">現在のパスワード</label>
+                  <input
+                    type="password"
+                    value={pwCurrent}
+                    onChange={(e: { target: { value: string } }) => setPwCurrent(e.target.value)}
+                    required
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-200"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">新しいパスワード（6文字以上）</label>
+                  <input
+                    type="password"
+                    value={pwNew}
+                    onChange={(e: { target: { value: string } }) => setPwNew(e.target.value)}
+                    required
+                    minLength={6}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-200"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1">新しいパスワード（確認）</label>
+                  <input
+                    type="password"
+                    value={pwConfirm}
+                    onChange={(e: { target: { value: string } }) => setPwConfirm(e.target.value)}
+                    required
+                    minLength={6}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-200"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={pwLoading}
+                    className="px-4 py-2 bg-pink-500 text-white rounded-xl text-sm font-medium disabled:opacity-60"
+                  >
+                    {pwLoading ? "変更中..." : "変更する"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowPwForm(false); setPwError(null); }}
+                    className="px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-500"
+                  >
+                    キャンセル
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
 
           {/* Section header */}
