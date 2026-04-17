@@ -206,6 +206,11 @@ async function main() {
       }
     }
 
+    // 日付変換
+    const expiresAt = parseYearMonth(expiresRaw);
+    const lastPaymentAt = parseDate(lastPaymentRaw);
+    const lastRenewedAt = parseDate(lastRenewedRaw) ?? lastPaymentAt; // 空欄なら振込日を使用
+
     // 有効判定: 次回期限があればその月末まで有効、なければCSVのステータスで判定
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -214,11 +219,6 @@ async function main() {
       : statusRaw.includes("有効") && !statusRaw.includes("期限切れ");
     if (active) results.active++;
     else results.inactive++;
-
-    // 日付変換
-    const expiresAt = parseYearMonth(expiresRaw);
-    const lastPaymentAt = parseDate(lastPaymentRaw);
-    const lastRenewedAt = parseDate(lastRenewedRaw) ?? lastPaymentAt; // 空欄なら振込日を使用
 
     // 更新月: 次回期限の月 → なければ最終振込日の月
     const renewalMonth = expiresAt
