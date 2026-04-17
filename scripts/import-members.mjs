@@ -6,20 +6,11 @@
  *
  * オプション:
  *   --encoding=shift_jis   文字コード指定（デフォルト: utf-8）
- *                          ExcelのデフォルトCSVはShift-JIS。
- *                          Excelで「CSV UTF-8（コンマ区切り）」保存なら不要。
  *   --dry-run              書き込まずに結果を確認
  *
- * 例:
- *   # Shift-JIS ファイルをdry-runで確認
- *   node --env-file=.env.local scripts/import-members.mjs members.csv --encoding=shift_jis --dry-run
- *
- *   # 本番実行
- *   node --env-file=.env.local scripts/import-members.mjs members.csv --encoding=shift_jis
- *
  * パスワードの決定ルール（優先順）:
- *   1. パスワード列 (col9) に値あり → そのまま使用
- *   2. 生年月日列 (col8) に値あり → YYYYMMDD形式に変換して使用
+ *   1. パスワード列 (col8) に値あり → そのまま使用
+ *   2. 生年月日列 (col7) に値あり → YYYYMMDD形式に変換して使用
  *   3. 上記両方とも空 → 会員Noを初期パスワードとして設定（要変更）
  *
  * 有効/無効の判定:
@@ -31,11 +22,14 @@ import { readFileSync } from "fs";
 import { scryptSync, randomBytes } from "crypto";
 
 // ── カラム定義（0始まり）──────────────────────────────────────
-const COL_MEMBER_NO = 0;  // 会員No
-const COL_NAME      = 1;  // 氏名
-const COL_BIRTHDAY  = 8;  // 生年月日 (YYYY/MM/DD)
-const COL_PASSWORD  = 9;  // パスワード (YYYYMMDD形式が多い)
-const COL_STATUS    = 12; // 有効/期限切れ
+const COL_MEMBER_NO    = 0;  // 会員No
+const COL_NAME         = 1;  // 氏名
+const COL_BIRTHDAY     = 7;  // 生年月日 (YYYY/MM/DD)
+const COL_PASSWORD     = 8;  // パスワード (YYYYMMDD形式)
+const COL_LAST_PAYMENT = 9;  // 最終振込日 (YYYY/MM/DD)
+const COL_LAST_RENEWED = 10; // 最終更新日 (YYYY/MM/DD)
+const COL_EXPIRES      = 11; // 次回期限 (YYYY/MM)
+const COL_STATUS       = 12; // 有効/期限切れ
 
 // ─────────────────────────────────────────────────────────────
 
@@ -51,7 +45,6 @@ function decodeFile(buf, encoding) {
     try {
       return new TextDecoder("shift_jis").decode(buf);
     } catch {
-      // fallback: some Node builds use different name
       return new TextDecoder("x-sjis").decode(buf);
     }
   }
@@ -91,6 +84,25 @@ function birthdayToPassword(bdStr) {
   if (!bdStr) return null;
   const p = bdStr.replace(/\//g, "").trim();
   return p.length === 8 ? p : null;
+}
+
+/** "YYYY/MM/DD" → "YYYY-MM-DD" */
+function parseDate(val) {
+  if (!val) return null;
+  const m = val.trim().match(/^(\d{4})\/(\d{2})\/(\d{2})$/);
+  if (!m) return null;
+  return `${m[1]}-${m[2]}-${m[3]}`;
+}
+
+/** "YYYY/MM" → 月末日の "YYYY-MM-DD" */
+function parseYearMonth(val) {
+  if (!val) return null;
+  const m = val.trim().match(/^(\d{4})\/(\d{2})$/);
+  if (!m) return null;
+  const year = parseInt(m[1]);
+  const month = parseInt(m[2]);
+  const lastDay = new Date(year, month, 0).getDate();
+  return `${m[1]}-${m[2]}-${String(lastDay).padStart(2, "0")}`;
 }
 
 async function kvPipeline(commands) {
@@ -135,15 +147,15 @@ async function main() {
   const content = decodeFile(buf, encoding);
   const rows = parseCSV(content);
 
-  // ヘッダー行を探す（「会員No」を含む行）
+  // ヘッダー行を探す（「会員No」「会員」を含む行）
   let headerRow = -1;
   for (let i = 0; i < Math.min(rows.length, 5); i++) {
-    if (rows[i].some((c) => c.includes("会員") || c.includes("会員No"))) {
+    if (rows[i].some((c) => c.includes("会員") || c.includes("氏名"))) {
       headerRow = i;
       break;
     }
   }
-  const dataStart = headerRow >= 0 ? headerRow + 1 : 2; // 見つからなければ2行目からとみなす
+  const dataStart = headerRow >= 0 ? headerRow + 1 : 2;
 
   console.log(`\nヘッダー行: ${headerRow + 1}行目、データ開始: ${dataStart + 1}行目`);
 
@@ -160,13 +172,16 @@ async function main() {
   const memberNumbers = [];
   const results = { active: 0, inactive: 0, skipped: 0 };
   const pwSources = { csv: 0, birthday: 0, memberNo: 0 };
-  const memberNoDefaultPw = []; // 会員Noをパスワードにした人
+  const memberNoDefaultPw = [];
 
   for (const row of dataRows) {
     const memberNumber = row[COL_MEMBER_NO]?.trim();
     const name = row[COL_NAME]?.trim();
     const birthday = row[COL_BIRTHDAY]?.trim();
     const passwordRaw = row[COL_PASSWORD]?.trim();
+    const lastPaymentRaw = row[COL_LAST_PAYMENT]?.trim();
+    const lastRenewedRaw = row[COL_LAST_RENEWED]?.trim();
+    const expiresRaw = row[COL_EXPIRES]?.trim();
     const statusRaw = row[COL_STATUS]?.trim() ?? "";
 
     if (!memberNumber || !name) {
@@ -191,10 +206,18 @@ async function main() {
       }
     }
 
-    // 有効判定: 「有効」を含み「期限切れ」を含まない場合のみ active
+    // 有効判定
     const active = statusRaw.includes("有効") && !statusRaw.includes("期限切れ");
     if (active) results.active++;
     else results.inactive++;
+
+    // 日付変換
+    const expiresAt = parseYearMonth(expiresRaw);
+    const lastPaymentAt = parseDate(lastPaymentRaw);
+    const lastRenewedAt = parseDate(lastRenewedRaw);
+
+    // 更新月（次回期限の月）
+    const renewalMonth = expiresAt ? new Date(expiresAt).getMonth() + 1 : undefined;
 
     const member = {
       memberNumber,
@@ -202,6 +225,10 @@ async function main() {
       passwordHash: hashPassword(password),
       joinedAt: new Date().toISOString(),
       active,
+      ...(expiresAt && { expiresAt }),
+      ...(lastPaymentAt && { lastPaymentAt }),
+      ...(lastRenewedAt && { lastRenewedAt }),
+      ...(renewalMonth && { renewalMonth }),
     };
 
     commands.push(["SET", `member:${memberNumber}`, JSON.stringify(member)]);
