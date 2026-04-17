@@ -16,7 +16,7 @@ export async function PUT(
   if (denied) return denied;
 
   const { id } = await params;
-  const { name, password, active, renewalMonth } = await request.json();
+  const { name, password, active, renewalMonth, expiresAt, lastPaymentAt, lastRenewedAt } = await request.json();
 
   if (password && password.length < 6) {
     return NextResponse.json({ error: "パスワードは6文字以上にしてください" }, { status: 400 });
@@ -27,6 +27,9 @@ export async function PUT(
     ...(password && { password }),
     ...(active !== undefined && { active }),
     ...(renewalMonth !== undefined && { renewalMonth: renewalMonth === null ? null : Number(renewalMonth) }),
+    ...(expiresAt !== undefined && { expiresAt: expiresAt || null }),
+    ...(lastPaymentAt !== undefined && { lastPaymentAt: lastPaymentAt || null }),
+    ...(lastRenewedAt !== undefined && { lastRenewedAt: lastRenewedAt || null }),
   });
 
   if (!result.success) {

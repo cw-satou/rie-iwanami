@@ -8,9 +8,17 @@ interface Member {
   joinedAt: string;
   active: boolean;
   renewalMonth?: number;
+  expiresAt?: string;
+  lastPaymentAt?: string;
+  lastRenewedAt?: string;
 }
 
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
+
+function fmtDate(d?: string) {
+  if (!d) return "—";
+  return new Date(d).toLocaleDateString("ja-JP", { year: "numeric", month: "numeric", day: "numeric" });
+}
 
 export default function AdminMembersUI({ initialMembers }: { initialMembers: Member[] }) {
   const [members, setMembers] = useState<Member[]>(initialMembers);
@@ -34,6 +42,9 @@ export default function AdminMembersUI({ initialMembers }: { initialMembers: Mem
   const [editPass, setEditPass] = useState("");
   const [editActive, setEditActive] = useState(true);
   const [editRenewalMonth, setEditRenewalMonth] = useState<number | "">("");
+  const [editExpiresAt, setEditExpiresAt] = useState("");
+  const [editLastPaymentAt, setEditLastPaymentAt] = useState("");
+  const [editLastRenewedAt, setEditLastRenewedAt] = useState("");
   const [editLoading, setEditLoading] = useState(false);
 
   const currentMonth = new Date().getMonth() + 1;
@@ -54,6 +65,9 @@ export default function AdminMembersUI({ initialMembers }: { initialMembers: Mem
     setEditActive(m.active);
     setEditPass("");
     setEditRenewalMonth(m.renewalMonth ?? "");
+    setEditExpiresAt(m.expiresAt ?? "");
+    setEditLastPaymentAt(m.lastPaymentAt ?? "");
+    setEditLastRenewedAt(m.lastRenewedAt ?? "");
     setGlobalError(null);
   }
 
@@ -71,9 +85,7 @@ export default function AdminMembersUI({ initialMembers }: { initialMembers: Mem
       if (!res.ok) throw new Error(data.error ?? "エラーが発生しました");
       setMembers((prev) => [...prev, data.member]);
       setShowAddForm(false);
-      setAddNum("");
-      setAddName("");
-      setAddPass("");
+      setAddNum(""); setAddName(""); setAddPass("");
     } catch (err: unknown) {
       setGlobalError(err instanceof Error ? err.message : "エラーが発生しました");
     } finally {
@@ -90,6 +102,9 @@ export default function AdminMembersUI({ initialMembers }: { initialMembers: Mem
         name: editName,
         active: editActive,
         renewalMonth: editRenewalMonth === "" ? null : Number(editRenewalMonth),
+        expiresAt: editExpiresAt || null,
+        lastPaymentAt: editLastPaymentAt || null,
+        lastRenewedAt: editLastRenewedAt || null,
       };
       if (editPass) body.password = editPass;
       const res = await fetch(`/api/admin/members/${memberNumber}`, {
@@ -136,7 +151,6 @@ export default function AdminMembersUI({ initialMembers }: { initialMembers: Mem
 
       {/* Search / filter bar */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
-        {/* Name search */}
         <input
           type="text"
           placeholder="名前で検索..."
@@ -144,58 +158,49 @@ export default function AdminMembersUI({ initialMembers }: { initialMembers: Mem
           onChange={(e) => setNameQuery(e.target.value)}
           className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-pink-200"
         />
-
         <div className="flex flex-wrap gap-2 items-center">
-          {/* Status filter */}
           {(["all", "active", "inactive"] as const).map((v) => (
             <button
               key={v}
               onClick={() => setStatusFilter(v)}
               className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                statusFilter === v
-                  ? "bg-pink-500 text-white"
-                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                statusFilter === v ? "bg-pink-500 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
               }`}
             >
               {v === "all" ? "すべて" : v === "active" ? "有効" : "無効"}
             </button>
           ))}
-
-          {/* This-month renewal toggle */}
           <button
             onClick={() => setThisMonthOnly((v) => !v)}
             className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors ${
-              thisMonthOnly
-                ? "bg-amber-400 text-white"
-                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+              thisMonthOnly ? "bg-amber-400 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
             }`}
           >
             {currentMonth}月更新のみ
           </button>
-
-          <span className="ml-auto text-xs text-gray-400">
-            {filtered.length} / {members.length} 名
-          </span>
+          <span className="ml-auto text-xs text-gray-400">{filtered.length} / {members.length} 名</span>
         </div>
       </div>
 
       {/* Member table */}
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-x-auto shadow-sm">
+        <table className="w-full text-sm whitespace-nowrap">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 font-semibold text-xs uppercase tracking-wide">
-              <th className="text-left px-5 py-3">会員番号</th>
-              <th className="text-left px-5 py-3">名前</th>
-              <th className="text-left px-5 py-3 hidden sm:table-cell">登録日</th>
-              <th className="text-left px-5 py-3">状態</th>
-              <th className="text-left px-4 py-3 hidden sm:table-cell">更新月</th>
-              <th className="px-5 py-3"></th>
+              <th className="text-left px-4 py-3">会員番号</th>
+              <th className="text-left px-4 py-3">名前</th>
+              <th className="text-left px-4 py-3">状態</th>
+              <th className="text-left px-4 py-3">更新月</th>
+              <th className="text-left px-4 py-3">次回期限</th>
+              <th className="text-left px-4 py-3">最終振込日</th>
+              <th className="text-left px-4 py-3">最終更新日</th>
+              <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-5 py-10 text-center text-gray-400 text-sm">
+                <td colSpan={8} className="px-5 py-10 text-center text-gray-400 text-sm">
                   {members.length === 0 ? "会員が登録されていません" : "条件に一致する会員がいません"}
                 </td>
               </tr>
@@ -205,10 +210,10 @@ export default function AdminMembersUI({ initialMembers }: { initialMembers: Mem
               editingId === member.memberNumber ? (
                 /* ── Edit row ── */
                 <tr key={member.memberNumber} className="border-b border-gray-100 bg-pink-50/40">
-                  <td className="px-5 py-4 font-mono text-xs text-gray-500 align-top pt-5">
+                  <td className="px-4 py-4 font-mono text-xs text-gray-500 align-top pt-5">
                     {member.memberNumber}
                   </td>
-                  <td className="px-5 py-4" colSpan={5}>
+                  <td className="px-4 py-4" colSpan={7}>
                     <form onSubmit={(e) => handleEdit(e, member.memberNumber)}>
                       <div className="flex flex-wrap gap-2 items-end">
                         <div>
@@ -222,7 +227,7 @@ export default function AdminMembersUI({ initialMembers }: { initialMembers: Mem
                         </div>
                         <div>
                           <label className="block text-xs text-gray-400 mb-1">
-                            新パスワード<span className="text-gray-300">（空欄で変更なし）</span>
+                            新パスワード<span className="text-gray-300 font-normal">（空欄で変更なし）</span>
                           </label>
                           <input
                             type="password"
@@ -240,10 +245,35 @@ export default function AdminMembersUI({ initialMembers }: { initialMembers: Mem
                             className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-24 focus:outline-none focus:ring-2 focus:ring-pink-200"
                           >
                             <option value="">なし</option>
-                            {MONTHS.map((m) => (
-                              <option key={m} value={m}>{m}月</option>
-                            ))}
+                            {MONTHS.map((m) => <option key={m} value={m}>{m}月</option>)}
                           </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-400 mb-1">次回期限</label>
+                          <input
+                            type="date"
+                            value={editExpiresAt}
+                            onChange={(e) => setEditExpiresAt(e.target.value)}
+                            className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-pink-200"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-400 mb-1">最終振込日</label>
+                          <input
+                            type="date"
+                            value={editLastPaymentAt}
+                            onChange={(e) => setEditLastPaymentAt(e.target.value)}
+                            className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-pink-200"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-400 mb-1">最終更新日</label>
+                          <input
+                            type="date"
+                            value={editLastRenewedAt}
+                            onChange={(e) => setEditLastRenewedAt(e.target.value)}
+                            className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-pink-200"
+                          />
                         </div>
                         <label className="flex items-center gap-1.5 text-sm text-gray-600 mb-0.5">
                           <input
@@ -254,22 +284,22 @@ export default function AdminMembersUI({ initialMembers }: { initialMembers: Mem
                           />
                           有効
                         </label>
-                        <div className="flex gap-2">
-                          <button
-                            type="submit"
-                            disabled={editLoading}
-                            className="px-4 py-2 bg-pink-500 text-white rounded-xl text-sm font-medium disabled:opacity-60"
-                          >
-                            {editLoading ? "保存中..." : "保存"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setEditingId(null)}
-                            className="px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-500 bg-white"
-                          >
-                            キャンセル
-                          </button>
-                        </div>
+                      </div>
+                      <div className="flex gap-2 mt-3">
+                        <button
+                          type="submit"
+                          disabled={editLoading}
+                          className="px-4 py-2 bg-pink-500 text-white rounded-xl text-sm font-medium disabled:opacity-60"
+                        >
+                          {editLoading ? "保存中..." : "保存"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingId(null)}
+                          className="px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-500 bg-white"
+                        >
+                          キャンセル
+                        </button>
                       </div>
                     </form>
                   </td>
@@ -277,33 +307,35 @@ export default function AdminMembersUI({ initialMembers }: { initialMembers: Mem
               ) : (
                 /* ── Normal row ── */
                 <tr key={member.memberNumber} className="border-b border-gray-100 hover:bg-gray-50/60 transition-colors">
-                  <td className="px-5 py-4 font-mono text-sm text-gray-600">{member.memberNumber}</td>
-                  <td className="px-5 py-4 font-medium text-gray-800">
-                    <span>{member.name}</span>
+                  <td className="px-4 py-3.5 font-mono text-sm text-gray-600">{member.memberNumber}</td>
+                  <td className="px-4 py-3.5 font-medium text-gray-800">
+                    {member.name}
                     {member.renewalMonth === currentMonth && (
                       <span className="ml-2 inline-block px-1.5 py-0.5 bg-amber-100 text-amber-600 rounded text-xs font-medium">
                         今月更新
                       </span>
                     )}
                   </td>
-                  <td className="px-5 py-4 text-gray-400 text-xs hidden sm:table-cell">
-                    {new Date(member.joinedAt).toLocaleDateString("ja-JP")}
-                  </td>
-                  <td className="px-5 py-4">
-                    <span
-                      className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        member.active
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-500"
-                      }`}
-                    >
+                  <td className="px-4 py-3.5">
+                    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      member.active ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
+                    }`}>
                       {member.active ? "有効" : "無効"}
                     </span>
                   </td>
-                  <td className="px-4 py-4 text-xs text-gray-400 hidden sm:table-cell">
+                  <td className="px-4 py-3.5 text-xs text-gray-400">
                     {member.renewalMonth ? `${member.renewalMonth}月` : "—"}
                   </td>
-                  <td className="px-5 py-4">
+                  <td className={`px-4 py-3.5 text-xs ${
+                    member.expiresAt && new Date(member.expiresAt) < new Date()
+                      ? "text-red-500 font-medium"
+                      : "text-gray-500"
+                  }`}>
+                    {fmtDate(member.expiresAt)}
+                  </td>
+                  <td className="px-4 py-3.5 text-xs text-gray-400">{fmtDate(member.lastPaymentAt)}</td>
+                  <td className="px-4 py-3.5 text-xs text-gray-400">{fmtDate(member.lastRenewedAt)}</td>
+                  <td className="px-4 py-3.5">
                     <div className="flex gap-2 justify-end">
                       <button
                         onClick={() => startEdit(member)}
