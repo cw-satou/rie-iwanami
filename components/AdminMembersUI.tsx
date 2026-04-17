@@ -50,13 +50,15 @@ export default function AdminMembersUI({ initialMembers }: { initialMembers: Mem
   const currentMonth = new Date().getMonth() + 1;
 
   const filtered = useMemo(() => {
-    return members.filter((m) => {
-      if (nameQuery && !m.name.includes(nameQuery)) return false;
-      if (statusFilter === "active" && !m.active) return false;
-      if (statusFilter === "inactive" && m.active) return false;
-      if (thisMonthOnly && m.renewalMonth !== currentMonth) return false;
-      return true;
-    });
+    return members
+      .filter((m) => {
+        if (nameQuery && !m.name.includes(nameQuery)) return false;
+        if (statusFilter === "active" && !m.active) return false;
+        if (statusFilter === "inactive" && m.active) return false;
+        if (thisMonthOnly && m.renewalMonth !== currentMonth) return false;
+        return true;
+      })
+      .sort((a, b) => a.memberNumber.localeCompare(b.memberNumber, undefined, { numeric: true }));
   }, [members, nameQuery, statusFilter, thisMonthOnly, currentMonth]);
 
   function startEdit(m: Member) {
