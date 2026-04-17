@@ -206,8 +206,12 @@ async function main() {
       }
     }
 
-    // 有効判定
-    const active = statusRaw.includes("有効") && !statusRaw.includes("期限切れ");
+    // 有効判定: 次回期限があればその月末まで有効、なければCSVのステータスで判定
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const active = expiresAt
+      ? new Date(expiresAt) >= today
+      : statusRaw.includes("有効") && !statusRaw.includes("期限切れ");
     if (active) results.active++;
     else results.inactive++;
 
