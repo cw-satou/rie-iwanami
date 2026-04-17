@@ -214,7 +214,7 @@ async function main() {
     // 日付変換
     const expiresAt = parseYearMonth(expiresRaw);
     const lastPaymentAt = parseDate(lastPaymentRaw);
-    const lastRenewedAt = parseDate(lastRenewedRaw);
+    const lastRenewedAt = parseDate(lastRenewedRaw) ?? lastPaymentAt; // 空欄なら振込日を使用
 
     // 更新月（次回期限の月）
     const renewalMonth = expiresAt ? new Date(expiresAt).getMonth() + 1 : undefined;
