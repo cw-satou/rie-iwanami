@@ -94,6 +94,16 @@ function parseDate(val) {
   return `${m[1]}-${m[2]}-${m[3]}`;
 }
 
+/** "YYYY-MM-DD" → 1年後の月末日 "YYYY-MM-DD" */
+function addOneYear(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  const year = d.getFullYear() + 1;
+  const month = d.getMonth() + 1;
+  const lastDay = new Date(year, month, 0).getDate();
+  return `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+}
+
 /** "YYYY/MM" → 月末日の "YYYY-MM-DD" */
 function parseYearMonth(val) {
   if (!val) return null;
@@ -207,9 +217,10 @@ async function main() {
     }
 
     // 日付変換
-    const expiresAt = parseYearMonth(expiresRaw);
     const lastPaymentAt = parseDate(lastPaymentRaw);
     const lastRenewedAt = parseDate(lastRenewedRaw) ?? lastPaymentAt; // 空欄なら振込日を使用
+    // 次回期限: CSV値 → なければ最終振込日+1年の月末
+    const expiresAt = parseYearMonth(expiresRaw) ?? addOneYear(lastPaymentAt);
 
     // 有効判定: 次回期限があればその月末まで有効、なければCSVのステータスで判定
     const today = new Date();
