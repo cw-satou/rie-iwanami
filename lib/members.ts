@@ -6,6 +6,7 @@ export interface Member {
   passwordHash: string;
   joinedAt: string;
   active: boolean;
+  renewalMonth?: number; // 1–12: month when annual membership renewal notice is sent
 }
 
 export type MemberPublic = Omit<Member, "passwordHash">;
@@ -90,7 +91,7 @@ export async function createMember(
 
 export async function updateMember(
   memberNumber: string,
-  updates: { name?: string; password?: string; active?: boolean }
+  updates: { name?: string; password?: string; active?: boolean; renewalMonth?: number | null }
 ): Promise<{ success: boolean; error?: string; member?: Member }> {
   const existing = await getMember(memberNumber);
   if (!existing) return { success: false, error: "会員が見つかりません" };
@@ -100,6 +101,9 @@ export async function updateMember(
     ...(updates.name !== undefined && { name: updates.name }),
     ...(updates.active !== undefined && { active: updates.active }),
     ...(updates.password && { passwordHash: hashPassword(updates.password) }),
+    ...(updates.renewalMonth !== undefined && {
+      renewalMonth: updates.renewalMonth ?? undefined,
+    }),
   };
 
   if (isKVEnabled()) {
