@@ -10,6 +10,7 @@ export interface Member {
   expiresAt?: string;     // next expiry date (YYYY-MM-DD)
   lastPaymentAt?: string; // last payment date (YYYY-MM-DD)
   lastRenewedAt?: string; // last renewal date (YYYY-MM-DD)
+  birthday?: string;      // date of birth (YYYY-MM-DD)
 }
 
 export type MemberPublic = Omit<Member, "passwordHash">;
@@ -102,6 +103,7 @@ export async function updateMember(
     expiresAt?: string | null;
     lastPaymentAt?: string | null;
     lastRenewedAt?: string | null;
+    birthday?: string | null;
   }
 ): Promise<{ success: boolean; error?: string; member?: Member }> {
   const existing = await getMember(memberNumber);
@@ -116,6 +118,7 @@ export async function updateMember(
     ...(updates.expiresAt !== undefined && { expiresAt: updates.expiresAt ?? undefined }),
     ...(updates.lastPaymentAt !== undefined && { lastPaymentAt: updates.lastPaymentAt ?? undefined }),
     ...(updates.lastRenewedAt !== undefined && { lastRenewedAt: updates.lastRenewedAt ?? undefined }),
+    ...(updates.birthday !== undefined && { birthday: updates.birthday ?? undefined }),
   };
 
   if (isKVEnabled()) {

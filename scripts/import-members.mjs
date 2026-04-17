@@ -238,12 +238,15 @@ async function main() {
         ? new Date(lastPaymentAt).getMonth() + 1
         : undefined;
 
+    const birthdayDate = parseDate(birthday);
+
     const member = {
       memberNumber,
       name,
       passwordHash: hashPassword(password),
       joinedAt: new Date().toISOString(),
       active,
+      ...(birthdayDate && { birthday: birthdayDate }),
       ...(expiresAt && { expiresAt }),
       ...(lastPaymentAt && { lastPaymentAt }),
       ...(lastRenewedAt && { lastRenewedAt }),

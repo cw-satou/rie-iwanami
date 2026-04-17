@@ -11,6 +11,7 @@ interface Member {
   expiresAt?: string;
   lastPaymentAt?: string;
   lastRenewedAt?: string;
+  birthday?: string;
 }
 
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
@@ -195,7 +196,7 @@ export default function AdminMembersUI({ initialMembers }: { initialMembers: Mem
               <th className="text-left px-4 py-3">更新月</th>
               <th className="text-left px-4 py-3">次回期限</th>
               <th className="text-left px-4 py-3">最終振込日</th>
-              <th className="text-left px-4 py-3">最終更新日</th>
+              <th className="text-left px-4 py-3">誕生日</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
@@ -336,7 +337,7 @@ export default function AdminMembersUI({ initialMembers }: { initialMembers: Mem
                     {fmtDate(member.expiresAt)}
                   </td>
                   <td className="px-4 py-3.5 text-xs text-gray-400">{fmtDate(member.lastPaymentAt)}</td>
-                  <td className="px-4 py-3.5 text-xs text-gray-400">{fmtDate(member.lastRenewedAt)}</td>
+                  <td className="px-4 py-3.5 text-xs text-gray-400">{fmtDate(member.birthday)}</td>
                   <td className="px-4 py-3.5">
                     <div className="flex gap-2 justify-end">
                       <button
