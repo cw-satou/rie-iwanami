@@ -1,8 +1,9 @@
 // ---------------------------------------------------------------------------
-// Live status — KV/memory backed flag
+// Live status — manual override flag only (KV key: "live_manual")
+// Auto-detection results are NOT stored here to avoid false-positive bleed.
 // ---------------------------------------------------------------------------
 
-let memLive = false;
+let memManual = false;
 
 function isKVEnabled(): boolean {
   return Boolean(process.env.KV_REST_API_URL);
@@ -11,17 +12,17 @@ function isKVEnabled(): boolean {
 export async function getLiveStatus(): Promise<boolean> {
   if (isKVEnabled()) {
     const { kv } = await import("@vercel/kv");
-    const val = await kv.get<boolean>("live_status");
+    const val = await kv.get<boolean>("live_manual");
     return val === true;
   }
-  return memLive;
+  return memManual;
 }
 
 export async function setLiveStatus(live: boolean): Promise<void> {
   if (isKVEnabled()) {
     const { kv } = await import("@vercel/kv");
-    await kv.set("live_status", live);
+    await kv.set("live_manual", live);
   } else {
-    memLive = live;
+    memManual = live;
   }
 }

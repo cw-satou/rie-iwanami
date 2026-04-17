@@ -10,23 +10,19 @@ export const dynamic = "force-dynamic";
  *
  * 優先順位:
  *  1. 管理者が手動でONにしていれば → 常に live: true
- *  2. Pococha自動検出 → 検出結果を返す（+ 結果をKVに同期）
- *  3. 自動検出失敗 → KVに保存された前回の状態を返す
+ *  2. Pococha自動検出 → 検出結果を返す（手動フラグは上書きしない）
+ *  3. 自動検出失敗 → false
  */
 export async function GET() {
-  // 手動フラグ確認
+  // 手動フラグ確認（管理画面のトグルでのみ変更される）
   const manualLive = await getLiveStatus();
   if (manualLive) {
     return NextResponse.json({ live: true, source: "manual" });
   }
 
-  // Pococha自動検出
+  // Pococha自動検出（結果は手動フラグに書き込まない）
   try {
     const result = await detectPocochaLive();
-    // 検出結果をKVに同期（次回の手動フォールバック用）
-    if (result.method !== "undetermined") {
-      await setLiveStatus(result.live);
-    }
     return NextResponse.json({
       live: result.live,
       source: "auto",
@@ -34,8 +30,7 @@ export async function GET() {
     });
   } catch (err) {
     console.error("Pococha live detection failed:", err);
-    // 自動検出失敗時は保存済みフラグを返す
-    return NextResponse.json({ live: manualLive, source: "fallback" });
+    return NextResponse.json({ live: false, source: "fallback" });
   }
 }
 
