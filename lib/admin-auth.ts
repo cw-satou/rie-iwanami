@@ -4,11 +4,21 @@ import { randomBytes } from "crypto";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "admin2024";
 const SESSION_DURATION = 8 * 60 * 60 * 1000; // 8時間
 
-// KV未使用時のインメモリフォールバック
+// member-store.ts と同じ優先順位で保存先を選ぶ
+const USE_REDIS = !!process.env.REDIS_URL;
+const USE_KV = !USE_REDIS && !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
+
+// ローカル開発用インメモリフォールバック（Redis/KV がない場合のみ）
 const mem = new Map<string, number>(); // token → expiresAt
 
-function isKVEnabled(): boolean {
-  return Boolean(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
+let redisClient: import("ioredis").Redis | null = null;
+
+async function getRedis(): Promise<import("ioredis").Redis> {
+  if (!redisClient) {
+    const { default: Redis } = await import("ioredis");
+    redisClient = new Redis(process.env.REDIS_URL!, { maxRetriesPerRequest: 3 });
+  }
+  return redisClient;
 }
 
 function generateToken(): string {
@@ -17,7 +27,10 @@ function generateToken(): string {
 
 async function sessionSet(token: string, expiresAt: number): Promise<void> {
   const ttl = Math.ceil((expiresAt - Date.now()) / 1000);
-  if (isKVEnabled()) {
+  if (USE_REDIS) {
+    const redis = await getRedis();
+    await redis.set(`admin_session:${token}`, String(expiresAt), "EX", ttl);
+  } else if (USE_KV) {
     const { kv } = await import("@vercel/kv");
     await kv.set(`admin_session:${token}`, expiresAt, { ex: ttl });
   } else {
@@ -26,7 +39,12 @@ async function sessionSet(token: string, expiresAt: number): Promise<void> {
 }
 
 async function sessionGet(token: string): Promise<number | null> {
-  if (isKVEnabled()) {
+  if (USE_REDIS) {
+    const redis = await getRedis();
+    const val = await redis.get(`admin_session:${token}`);
+    return val ? Number(val) : null;
+  }
+  if (USE_KV) {
     const { kv } = await import("@vercel/kv");
     return kv.get<number>(`admin_session:${token}`);
   }
@@ -34,7 +52,10 @@ async function sessionGet(token: string): Promise<number | null> {
 }
 
 async function sessionDelete(token: string): Promise<void> {
-  if (isKVEnabled()) {
+  if (USE_REDIS) {
+    const redis = await getRedis();
+    await redis.del(`admin_session:${token}`);
+  } else if (USE_KV) {
     const { kv } = await import("@vercel/kv");
     await kv.del(`admin_session:${token}`);
   } else {

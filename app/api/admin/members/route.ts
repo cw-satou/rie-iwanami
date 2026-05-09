@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/admin-auth";
-import { getMembers, upsertMember, deleteMember } from "@/lib/member-store";
+import { getMembers, upsertMember, deleteMember, createBackup } from "@/lib/member-store";
 import { Member } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -55,6 +55,7 @@ export async function DELETE(req: NextRequest) {
   if (!memberNumber) {
     return NextResponse.json({ error: "会員番号は必須です" }, { status: 400 });
   }
+  await createBackup(`削除前: ${memberNumber}`);
   await deleteMember(memberNumber);
   return NextResponse.json({ ok: true });
 }
