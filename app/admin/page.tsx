@@ -86,6 +86,10 @@ export default function AdminPage() {
   // バックアップ作成中
   const [backupWorking, setBackupWorking] = useState(false);
 
+  // KV→Redis 移行
+  const [migrateMsg, setMigrateMsg] = useState("");
+  const [migrating, setMigrating] = useState(false);
+
   // ---- セッション確認 ----
   useEffect(() => {
     // ログイン済みかどうか確認（バックアップ一覧が取れるかで判断）
@@ -223,6 +227,21 @@ export default function AdminPage() {
       });
     }
     setAddSaving(false);
+  }
+
+  // ---- KV→Redis 移行 ----
+  async function handleMigrateKV() {
+    setMigrating(true);
+    setMigrateMsg("");
+    const res = await fetch("/api/admin/migrate-kv", { method: "POST" });
+    const data = await res.json();
+    if (res.ok) {
+      setMigrateMsg(`移行完了: ${data.migratedCount}名（${data.members.join(", ")}）`);
+      await loadAll();
+    } else {
+      setMigrateMsg(data.error ?? "移行に失敗しました");
+    }
+    setMigrating(false);
   }
 
   // ---- バックアップ作成＆ダウンロード ----
@@ -461,6 +480,27 @@ export default function AdminPage() {
               >
                 {backupWorking ? "処理中..." : "バックアップ作成＆ダウンロード"}
               </button>
+            </div>
+
+            {/* KV→Redis 移行 */}
+            <div className="bg-yellow-50 rounded-xl border border-yellow-200 p-4 space-y-3">
+              <h2 className="text-sm font-bold text-yellow-800">データ復元（KV→Redis 移行）</h2>
+              <p className="text-xs text-yellow-700 leading-relaxed">
+                以前 Vercel KV に保存されていたデータを Redis に移行します。
+                データが消えた場合にお試しください。
+              </p>
+              <button
+                onClick={handleMigrateKV}
+                disabled={migrating}
+                className="w-full py-2.5 bg-yellow-400 text-white font-bold rounded-xl text-sm disabled:opacity-60 active:bg-yellow-500"
+              >
+                {migrating ? "移行中..." : "KVからデータを復元する"}
+              </button>
+              {migrateMsg && (
+                <p className={`text-xs text-center ${migrateMsg.startsWith("移行完了") ? "text-green-600" : "text-red-500"}`}>
+                  {migrateMsg}
+                </p>
+              )}
             </div>
 
             <div className="bg-white rounded-xl border border-gray-100 p-4 space-y-3">
