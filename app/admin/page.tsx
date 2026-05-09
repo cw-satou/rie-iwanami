@@ -57,11 +57,11 @@ function isThisMonth(nextDate: string | null): boolean {
   return nextDate.startsWith(new Date().toISOString().slice(0, 7));
 }
 
-// "active" | "thisMonth" | "inactive"
-function memberStatus(m: Member): "active" | "thisMonth" | "inactive" {
-  if (!m.isActive) return "inactive";
+// "active" | "thisMonth" | "overdue" | "withdrawn"
+function memberStatus(m: Member): "active" | "thisMonth" | "overdue" | "withdrawn" {
+  if (!m.isActive) return "withdrawn";
   if (isThisMonth(m.nextPaymentDate)) return "thisMonth";
-  if (isOverdue(m.nextPaymentDate)) return "inactive";
+  if (isOverdue(m.nextPaymentDate)) return "overdue";
   return "active";
 }
 
@@ -439,8 +439,8 @@ export default function AdminPage() {
             <div className="grid grid-cols-3 gap-2">
               {[
                 { label: "総会員数", value: members.length },
-                { label: "有効", value: members.filter((m) => memberStatus(m) !== "inactive").length },
-                { label: "無効", value: members.filter((m) => memberStatus(m) === "inactive").length },
+                { label: "有効", value: members.filter((m) => memberStatus(m) === "active" || memberStatus(m) === "thisMonth").length },
+                { label: "無効", value: members.filter((m) => memberStatus(m) === "overdue" || memberStatus(m) === "withdrawn").length },
               ].map((s) => (
                 <div key={s.label} className="bg-white rounded-xl p-2 border border-gray-100 text-center">
                   <p className="text-xl font-bold text-pink-500">{s.value}</p>
@@ -517,8 +517,8 @@ export default function AdminPage() {
                           (m.furigana ?? "").toLowerCase().includes(q);
                         if (!matchText) return false;
                       }
-                      if (memberFilter === "active") return memberStatus(m) !== "inactive";
-                      if (memberFilter === "inactive") return memberStatus(m) === "inactive";
+                      if (memberFilter === "active") return memberStatus(m) === "active" || memberStatus(m) === "thisMonth";
+                      if (memberFilter === "inactive") return memberStatus(m) === "overdue" || memberStatus(m) === "withdrawn";
                       if (memberFilter === "thisMonth") {
                         if (!m.isActive || !m.nextPaymentDate) return false;
                         const ym = new Date().toISOString().slice(0, 7);
@@ -539,17 +539,18 @@ export default function AdminPage() {
                         <td className="px-3 py-2 whitespace-nowrap">
                           {(() => {
                             const s = memberStatus(m);
+                            const label =
+                              s === "active" ? "有効" :
+                              s === "thisMonth" ? "今月期限" :
+                              s === "withdrawn" ? "退会済" : "無効";
+                            const cls =
+                              s === "active" ? "bg-green-100 text-green-700" :
+                              s === "thisMonth" ? "bg-yellow-100 text-yellow-700" :
+                              s === "withdrawn" ? "bg-red-100 text-red-500" :
+                              "bg-gray-100 text-gray-500";
                             return (
-                              <span
-                                className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                                  s === "active"
-                                    ? "bg-green-100 text-green-700"
-                                    : s === "thisMonth"
-                                    ? "bg-yellow-100 text-yellow-700"
-                                    : "bg-gray-100 text-gray-500"
-                                }`}
-                              >
-                                {s === "active" ? "有効" : s === "thisMonth" ? "今月期限" : "無効"}
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${cls}`}>
+                                {label}
                               </span>
                             );
                           })()}
