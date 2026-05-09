@@ -163,7 +163,8 @@ export async function POST(req: NextRequest) {
   if (Object.keys(payHistMap).length > 0) {
     const existing = await getPaymentHistoryAll();
     for (const [num, dates] of Object.entries(payHistMap)) {
-      const merged = [...new Set([...(existing[num] ?? []), ...dates])].sort();
+      const combined = (existing[num] ?? []).concat(dates);
+      const merged = combined.filter((d, i) => combined.indexOf(d) === i).sort();
       existing[num] = merged;
     }
     await setPaymentHistoryAll(existing);
