@@ -63,6 +63,7 @@ export default function AdminPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [backups, setBackups] = useState<BackupEntry[]>([]);
   const [tab, setTab] = useState<"members" | "backup">("members");
+  const [memberSearch, setMemberSearch] = useState("");
 
   // 会員編集モーダル
   const [editMember, setEditMember] = useState<Member | null>(null);
@@ -433,50 +434,78 @@ export default function AdminPage() {
               ))}
             </div>
 
-            {/* 会員追加ボタン */}
-            <button
-              onClick={() => setShowAdd(true)}
-              className="w-full py-2.5 rounded-xl border-2 border-dashed border-pink-200 text-sm text-pink-400 font-medium active:bg-pink-50"
-            >
-              ＋ 会員を追加
-            </button>
+            {/* 操作バー */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="会員番号・名前で検索"
+                value={memberSearch}
+                onChange={(e) => setMemberSearch(e.target.value)}
+                className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-pink-400"
+              />
+              <button
+                onClick={() => setShowAdd(true)}
+                className="px-4 py-2 rounded-xl border-2 border-dashed border-pink-200 text-sm text-pink-400 font-medium active:bg-pink-50 whitespace-nowrap"
+              >
+                ＋ 追加
+              </button>
+            </div>
 
-            {/* 会員リスト（名前タップで編集） */}
+            {/* 会員テーブル */}
             {members.length === 0 ? (
               <p className="text-center text-sm text-gray-400 py-8">会員データがありません</p>
             ) : (
-              <div className="space-y-2">
-                {members.map((m) => (
-                  <button
-                    key={m.memberNumber}
-                    onClick={() => openEdit(m)}
-                    className="w-full bg-white rounded-xl border border-gray-100 p-3 text-left active:bg-gray-50"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-pink-600">{m.name || m.memberNumber}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          {m.memberNumber}{m.furigana && ` ・ ${m.furigana}`}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-500">
-                          <span>最終振込: {fmtDate(m.lastPaymentDate)}</span>
-                          <span>次回: {fmtDate(m.nextPaymentDate)}</span>
-                        </div>
-                      </div>
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
-                          m.isActive
-                            ? isOverdue(m.nextPaymentDate)
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-green-100 text-green-700"
-                            : "bg-gray-100 text-gray-500"
-                        }`}
-                      >
-                        {m.isActive ? (isOverdue(m.nextPaymentDate) ? "期限切れ" : "有効") : "無効"}
-                      </span>
-                    </div>
-                  </button>
-                ))}
+              <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm min-w-[560px]">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-gray-100">
+                        <th className="text-left px-3 py-2.5 text-xs font-medium text-gray-500 whitespace-nowrap">会員NO</th>
+                        <th className="text-left px-3 py-2.5 text-xs font-medium text-gray-500">氏名</th>
+                        <th className="text-left px-3 py-2.5 text-xs font-medium text-gray-500 whitespace-nowrap">最終振込日</th>
+                        <th className="text-left px-3 py-2.5 text-xs font-medium text-gray-500 whitespace-nowrap">次回振込日</th>
+                        <th className="text-left px-3 py-2.5 text-xs font-medium text-gray-500">状態</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {members
+                        .filter((m) => {
+                          if (!memberSearch) return true;
+                          const q = memberSearch.toLowerCase();
+                          return (
+                            m.memberNumber.toLowerCase().includes(q) ||
+                            m.name.toLowerCase().includes(q) ||
+                            (m.furigana ?? "").toLowerCase().includes(q)
+                          );
+                        })
+                        .map((m) => (
+                          <tr
+                            key={m.memberNumber}
+                            onClick={() => openEdit(m)}
+                            className="border-b border-gray-50 last:border-0 hover:bg-pink-50 active:bg-pink-50 cursor-pointer"
+                          >
+                            <td className="px-3 py-2.5 text-xs text-gray-500 whitespace-nowrap">{m.memberNumber}</td>
+                            <td className="px-3 py-2.5 font-medium text-pink-600 whitespace-nowrap">{m.name}</td>
+                            <td className="px-3 py-2.5 text-xs text-gray-700 whitespace-nowrap">{fmtDate(m.lastPaymentDate)}</td>
+                            <td className="px-3 py-2.5 text-xs text-gray-700 whitespace-nowrap">{fmtDate(m.nextPaymentDate)}</td>
+                            <td className="px-3 py-2.5 whitespace-nowrap">
+                              <span
+                                className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                  m.isActive
+                                    ? isOverdue(m.nextPaymentDate)
+                                      ? "bg-yellow-100 text-yellow-700"
+                                      : "bg-green-100 text-green-700"
+                                    : "bg-gray-100 text-gray-500"
+                                }`}
+                              >
+                                {m.isActive ? (isOverdue(m.nextPaymentDate) ? "期限切れ" : "有効") : "無効"}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>

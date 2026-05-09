@@ -77,11 +77,12 @@ export async function POST(req: NextRequest) {
   const colPhone       = idxOf(["電話番号", "電話"]);
   const colEmail       = idxOf(["メールアドレス", "メール"]);
   const colJoinDate    = idxOf(["入会日"]);
-  const colLastPayment = idxOf(["最終振込日"]);
-  const colPayHistory  = idxOf(["振込履歴"]);
-  const colBirthday    = idxOf(["生年月日", "誕生日"]);
-  const colStatus      = idxOf(["状態"]);
-  const colNotes       = idxOf(["備考"]);
+  // ヘッダー検出 + 失敗時は固定列番号フォールバック（CSV定義順: 8列目=最終振込日, 10列目=振込履歴）
+  const colLastPayment = idxOf(["最終振込日"]) >= 0 ? idxOf(["最終振込日"]) : 8;
+  const colPayHistory  = idxOf(["振込履歴"])  >= 0 ? idxOf(["振込履歴"])  : 10;
+  const colBirthday    = idxOf(["生年月日", "誕生日"]) >= 0 ? idxOf(["生年月日", "誕生日"]) : 11;
+  const colStatus      = idxOf(["状態"]) >= 0 ? idxOf(["状態"]) : 12;
+  const colNotes       = idxOf(["備考"]) >= 0 ? idxOf(["備考"]) : 14;
 
   const now = new Date().toISOString();
   const today = now.slice(0, 10);
