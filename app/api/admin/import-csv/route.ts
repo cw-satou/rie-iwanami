@@ -44,6 +44,12 @@ function parseCsvLine(line: string): string[] {
   return fields;
 }
 
+// 「状態」列の値から isActive を判定
+// 退会済 → false、それ以外（在籍・連絡中・要確認 など）→ true
+function isActiveFromStatus(status: string): boolean {
+  return !status.includes("退会");
+}
+
 export async function POST(req: NextRequest) {
   if (!(await getAdminSession())) return unauthorized();
 
@@ -54,7 +60,7 @@ export async function POST(req: NextRequest) {
   }
 
   const text = await file.text();
-  // BOM除去
+  // UTF-8 BOM 除去
   const content = text.startsWith("﻿") ? text.slice(1) : text;
   const lines = content.split(/\r?\n/).filter((l) => l.trim() !== "");
 
@@ -64,35 +70,22 @@ export async function POST(req: NextRequest) {
 
   const headers = parseCsvLine(lines[0]).map((h) => h.trim());
 
+  // ヘッダー名でインデックスを検索
   const idxOf = (names: string[]) =>
     headers.findIndex((h) => names.some((n) => h.includes(n)));
 
-  const colMemberNo = idxOf(["会員NO", "会員No", "会員番号"]);
-  const colName     = idxOf(["名前", "氏名"]);
-  const colFurigana = idxOf(["フリガナ", "ふりがな", "カナ"]);
-  const colZip      = idxOf(["〒", "郵便番号"]);
-  const colAddress  = idxOf(["住所"]);
-  const colPhone    = idxOf(["電話番号", "電話"]);
-  const colEmail    = idxOf(["メールアドレス", "メール"]);
-  const colBirthday = idxOf(["生年月日", "誕生日"]);
-
-  // 入会日（最初の振込日列）
-  const colJoinDate = idxOf(["入会日", "振込日①", "振込日1", "初回振込"]);
-
-  // 日付系の列（生年月日以外）をインデックス順に収集
-  const dateCols: number[] = [];
-  for (let i = 0; i < headers.length; i++) {
-    if (i === colBirthday) continue;
-    const h = headers[i];
-    if (
-      h.includes("入会日") ||
-      h.includes("振込日") ||
-      h.includes("更新日") ||
-      h.includes("振込")
-    ) {
-      dateCols.push(i);
-    }
-  }
+  const colMemberNo       = idxOf(["会員NO", "会員No", "会員番号"]);
+  const colName           = idxOf(["名前", "氏名"]);
+  const colFurigana       = idxOf(["フリガナ", "ふりがな"]);
+  const colZip            = idxOf(["〒", "郵便番号"]);
+  const colAddress        = idxOf(["住所"]);
+  const colPhone          = idxOf(["電話番号", "電話"]);
+  const colEmail          = idxOf(["メールアドレス", "メール"]);
+  const colJoinDate       = idxOf(["入会日"]);
+  const colLastPayment    = idxOf(["最終振込日", "ææ°æ¯è¾¼æ¥"]);
+  const colBirthday       = idxOf(["生年月日", "誕生日"]);
+  const colStatus         = idxOf(["状態", "ç¶æ"]);
+  const colNotes          = idxOf(["備考", "åè"]);
 
   const now = new Date().toISOString();
   const today = now.slice(0, 10);
@@ -108,56 +101,41 @@ export async function POST(req: NextRequest) {
     const name = colName >= 0 ? cols[colName]?.trim() ?? "" : "";
     if (!name) continue;
 
-    // 日付を収集
-    let allDates: (string | null)[];
-    if (dateCols.length > 0) {
-      allDates = dateCols.map((ci) => parseDate(cols[ci] ?? ""));
-    } else {
-      // ヘッダーで特定できなかった場合は全列を走査
-      allDates = cols
-        .filter((_, ci) => ci !== colBirthday)
-        .map((v) => parseDate(v));
-    }
-
-    const nonNullDates = allDates.filter((d): d is string => !!d);
-
-    let joinDate = colJoinDate >= 0 ? parseDate(cols[colJoinDate] ?? "") : null;
-    if (!joinDate && nonNullDates.length > 0) joinDate = nonNullDates[0];
-
-    // 最終振込日 = 最右の日付
-    const lastPaymentDate = nonNullDates.length > 0
-      ? nonNullDates[nonNullDates.length - 1]
-      : null;
+    const joinDate     = colJoinDate    >= 0 ? parseDate(cols[colJoinDate] ?? "")    : null;
+    const lastPayment  = colLastPayment >= 0 ? parseDate(cols[colLastPayment] ?? "") : null;
+    const birthday     = colBirthday   >= 0 ? parseDate(cols[colBirthday] ?? "")   : null;
+    const statusStr    = colStatus     >= 0 ? cols[colStatus]?.trim() ?? ""         : "";
 
     // 次回振込日 = 最終振込日 + 1年
     let nextPaymentDate: string | null = null;
-    if (lastPaymentDate) {
-      const d = new Date(lastPaymentDate);
+    if (lastPayment) {
+      const d = new Date(lastPayment);
       d.setFullYear(d.getFullYear() + 1);
       nextPaymentDate = d.toISOString().slice(0, 10);
     }
 
-    const isActive = nextPaymentDate ? nextPaymentDate >= today : false;
-
-    const birthday = colBirthday >= 0 ? parseDate(cols[colBirthday] ?? "") : null;
+    // 有効判定: 状態列を優先、退会済なら無効
+    const isActive = statusStr
+      ? isActiveFromStatus(statusStr)
+      : nextPaymentDate ? nextPaymentDate >= today : false;
 
     const member: Member = {
       memberNumber,
       name,
-      furigana:  colFurigana >= 0 ? cols[colFurigana]?.trim() || undefined : undefined,
-      zipCode:   colZip      >= 0 ? cols[colZip]?.trim()      || undefined : undefined,
-      address:   colAddress  >= 0 ? cols[colAddress]?.trim()   || undefined : undefined,
-      phone:     colPhone    >= 0 ? cols[colPhone]?.trim()     || undefined : undefined,
-      email:     colEmail    >= 0 ? cols[colEmail]?.trim()     || undefined : undefined,
-      birthday:  birthday ?? undefined,
-      password:  memberNumber,
+      furigana:         colFurigana  >= 0 ? cols[colFurigana]?.trim()  || undefined : undefined,
+      zipCode:          colZip       >= 0 ? cols[colZip]?.trim()        || undefined : undefined,
+      address:          colAddress   >= 0 ? cols[colAddress]?.trim()    || undefined : undefined,
+      phone:            colPhone     >= 0 ? cols[colPhone]?.trim()      || undefined : undefined,
+      email:            colEmail     >= 0 ? cols[colEmail]?.trim()      || undefined : undefined,
+      birthday:         birthday ?? undefined,
+      password:         memberNumber,
       isActive,
-      joinDate:  joinDate ?? today,
-      lastPaymentDate,
+      joinDate:         joinDate ?? today,
+      lastPaymentDate:  lastPayment,
       nextPaymentDate,
-      notes:     undefined,
-      createdAt: now,
-      updatedAt: now,
+      notes:            colNotes >= 0 ? cols[colNotes]?.trim() || undefined : undefined,
+      createdAt:        now,
+      updatedAt:        now,
     };
 
     newMembers[memberNumber] = member;
