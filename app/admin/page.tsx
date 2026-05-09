@@ -88,6 +88,9 @@ export default function AdminPage() {
   const [confirmDate, setConfirmDate] = useState(today());
   const [confirming, setConfirming] = useState(false);
 
+  // 一覧からのクイック振込確認
+  const [quickConfirming, setQuickConfirming] = useState<string | null>(null);
+
   // 振込履歴（編集モーダル内）
   const [payHistory, setPayHistory] = useState<string[]>([]);
   const [payHistLoading, setPayHistLoading] = useState(false);
@@ -176,6 +179,25 @@ export default function AdminPage() {
     const res = await fetch(`/api/admin/payments?memberNumber=${m.memberNumber}`);
     if (res.ok) setPayHistory(await res.json());
     setPayHistLoading(false);
+  }
+
+  // ---- 一覧からのクイック振込確認（今日付け） ----
+  async function handleQuickConfirm(e: React.MouseEvent, memberNumber: string) {
+    e.stopPropagation();
+    if (!confirm(`${memberNumber} の振込を今日（${today()}）で確認しますか？`)) return;
+    setQuickConfirming(memberNumber);
+    const res = await fetch("/api/admin/transfer-confirm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ memberNumber, paymentDate: today() }),
+    });
+    if (res.ok) {
+      const updated: Member = await res.json();
+      setMembers((prev) =>
+        prev.map((m) => (m.memberNumber === updated.memberNumber ? updated : m))
+      );
+    }
+    setQuickConfirming(null);
   }
 
   // ---- 振込確認（編集モーダル内） ----
@@ -504,6 +526,7 @@ export default function AdminPage() {
                     <th className="text-left px-3 py-2 text-xs font-medium text-gray-500 whitespace-nowrap">最終振込日</th>
                     <th className="text-left px-3 py-2 text-xs font-medium text-gray-500 whitespace-nowrap">次回振込日</th>
                     <th className="text-left px-3 py-2 text-xs font-medium text-gray-500">状態</th>
+                    <th className="px-3 py-2"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -556,6 +579,15 @@ export default function AdminPage() {
                               </span>
                             );
                           })()}
+                        </td>
+                        <td className="px-2 py-1.5 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={(e) => handleQuickConfirm(e, m.memberNumber)}
+                            disabled={quickConfirming === m.memberNumber}
+                            className="text-xs px-2 py-1 bg-blue-500 text-white rounded-lg disabled:opacity-50 active:bg-blue-600 whitespace-nowrap"
+                          >
+                            {quickConfirming === m.memberNumber ? "…" : "振込確認"}
+                          </button>
                         </td>
                       </tr>
                     ))}
