@@ -88,10 +88,10 @@ export default function AdminPage() {
   const importRef = useRef<HTMLInputElement>(null);
   const [importMsg, setImportMsg] = useState("");
 
-  // Excelインポート
-  const excelRef = useRef<HTMLInputElement>(null);
-  const [excelMsg, setExcelMsg] = useState("");
-  const [excelWorking, setExcelWorking] = useState(false);
+  // CSVインポート
+  const csvRef = useRef<HTMLInputElement>(null);
+  const [csvMsg, setCsvMsg] = useState("");
+  const [csvWorking, setCsvWorking] = useState(false);
 
   // バックアップ作成中
   const [backupWorking, setBackupWorking] = useState(false);
@@ -254,30 +254,30 @@ export default function AdminPage() {
     setMigrating(false);
   }
 
-  // ---- Excelインポート ----
-  async function handleExcelImport(e: React.ChangeEvent<HTMLInputElement>) {
+  // ---- CSVインポート ----
+  async function handleCsvImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setExcelMsg("");
-    setExcelWorking(true);
+    setCsvMsg("");
+    setCsvWorking(true);
 
     const formData = new FormData();
     formData.append("file", file);
 
-    const res = await fetch("/api/admin/import-excel", {
+    const res = await fetch("/api/admin/import-csv", {
       method: "POST",
       body: formData,
     });
     const data = await res.json();
     if (res.ok) {
-      setExcelMsg(
+      setCsvMsg(
         `インポート完了: 追加 ${data.added}件、更新 ${data.updated}件、スキップ ${data.skipped}件（合計 ${data.total}件）`
       );
       await loadAll();
     } else {
-      setExcelMsg(data.error ?? "Excelインポートに失敗しました");
+      setCsvMsg(data.error ?? "CSVインポートに失敗しました");
     }
-    setExcelWorking(false);
+    setCsvWorking(false);
     e.target.value = "";
   }
 
@@ -540,39 +540,39 @@ export default function AdminPage() {
               )}
             </div>
 
-            {/* Excelインポート */}
+            {/* CSVインポート */}
             <div className="bg-white rounded-xl border border-gray-100 p-4 space-y-3">
-              <h2 className="text-sm font-bold">Excelインポート</h2>
+              <h2 className="text-sm font-bold">CSVインポート</h2>
               <p className="text-xs text-gray-500 leading-relaxed">
-                Excelファイル（.xlsx/.xls）から会員データを一括登録します。
+                CSVファイルから会員データを一括登録します。
                 列の順序: 会員NO・名前・フリガナ・〒・住所・電話番号・メールアドレス・入会日(振込日)・更新日①②...・生年月日
               </p>
               <p className="text-xs text-gray-400 leading-relaxed">
                 ※ パスワードは会員番号で自動設定されます。有効期限は最終振込日+1年で判定します。
               </p>
               <input
-                ref={excelRef}
+                ref={csvRef}
                 type="file"
-                accept=".xlsx,.xls"
+                accept=".csv,text/csv"
                 className="hidden"
-                onChange={handleExcelImport}
+                onChange={handleCsvImport}
               />
               <button
-                onClick={() => excelRef.current?.click()}
-                disabled={excelWorking}
+                onClick={() => csvRef.current?.click()}
+                disabled={csvWorking}
                 className="w-full py-2.5 bg-green-500 text-white font-bold rounded-xl text-sm disabled:opacity-60 active:bg-green-600"
               >
-                {excelWorking ? "処理中..." : "Excelファイルを選択してインポート"}
+                {csvWorking ? "処理中..." : "CSVファイルを選択してインポート"}
               </button>
-              {excelMsg && (
+              {csvMsg && (
                 <p
                   className={`text-xs text-center ${
-                    excelMsg.startsWith("インポート完了")
+                    csvMsg.startsWith("インポート完了")
                       ? "text-green-600"
                       : "text-red-500"
                   }`}
                 >
-                  {excelMsg}
+                  {csvMsg}
                 </p>
               )}
             </div>
