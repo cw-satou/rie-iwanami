@@ -508,6 +508,8 @@ export default function AdminPage() {
                 </thead>
                 <tbody>
                   {members
+                    .slice()
+                    .sort((a, b) => a.memberNumber.localeCompare(b.memberNumber, "ja"))
                     .filter((m) => {
                       if (memberSearch) {
                         const q = memberSearch.toLowerCase();
