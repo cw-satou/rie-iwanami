@@ -207,3 +207,71 @@ export async function importMembers(incoming: MembersRecord): Promise<ImportResu
   await setMembers(current);
   return result;
 }
+
+// ---- 振込履歴（別テーブル） ----
+
+const PAYMENTS_KEY = "fc:payments";
+
+export async function getPaymentHistoryAll(): Promise<Record<string, string[]>> {
+  if (USE_REDIS || USE_KV) {
+    return (await kvGet<Record<string, string[]>>(PAYMENTS_KEY)) ?? {};
+  }
+  const db = readLocalDB() as LocalDB & { payments?: Record<string, string[]> };
+  return db.payments ?? {};
+}
+
+export async function setPaymentHistoryAll(data: Record<string, string[]>): Promise<void> {
+  if (USE_REDIS || USE_KV) {
+    await kvSet(PAYMENTS_KEY, data);
+    return;
+  }
+  const db = readLocalDB() as LocalDB & { payments?: Record<string, string[]> };
+  (db as Record<string, unknown>).payments = data;
+  writeLocalDB(db);
+}
+
+export async function getPaymentHistory(memberNumber: string): Promise<string[]> {
+  const all = await getPaymentHistoryAll();
+  return all[memberNumber] ?? [];
+}
+
+export async function addPayment(memberNumber: string, date: string): Promise<string[]> {
+  const all = await getPaymentHistoryAll();
+  const current = all[memberNumber] ?? [];
+  if (!current.includes(date)) {
+    current.push(date);
+    current.sort();
+  }
+  all[memberNumber] = current;
+  await setPaymentHistoryAll(all);
+  return current;
+}
+
+export async function removePayment(memberNumber: string, date: string): Promise<{ history: string[]; member: Member | null }> {
+  const all = await getPaymentHistoryAll();
+  const remaining = (all[memberNumber] ?? []).filter((d) => d !== date);
+  all[memberNumber] = remaining;
+  await setPaymentHistoryAll(all);
+
+  // 会員レコードの lastPaymentDate / nextPaymentDate を再計算して更新
+  const member = await getMember(memberNumber);
+  if (!member) return { history: remaining, member: null };
+
+  const lastPayment = remaining.length > 0 ? remaining[remaining.length - 1] : null;
+  let nextPaymentDate: string | null = null;
+  if (lastPayment) {
+    const d = new Date(lastPayment);
+    d.setFullYear(d.getFullYear() + 1);
+    nextPaymentDate = d.toISOString().slice(0, 10);
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  const updated: Member = {
+    ...member,
+    lastPaymentDate: lastPayment,
+    nextPaymentDate,
+    isActive: nextPaymentDate ? nextPaymentDate >= today : false,
+    updatedAt: new Date().toISOString(),
+  };
+  await upsertMember(updated);
+  return { history: remaining, member: updated };
+}

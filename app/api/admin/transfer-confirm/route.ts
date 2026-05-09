@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/admin-auth";
-import { getMember, upsertMember } from "@/lib/member-store";
+import { getMember, upsertMember, addPayment } from "@/lib/member-store";
 
 export async function POST(req: NextRequest) {
   if (!(await getAdminSession())) {
@@ -34,5 +34,7 @@ export async function POST(req: NextRequest) {
   };
 
   await upsertMember(updated);
+  // 振込履歴テーブルにも追記
+  await addPayment(memberNumber, today);
   return NextResponse.json(updated);
 }

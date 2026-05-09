@@ -69,10 +69,14 @@ export default function AdminPage() {
   const [editForm, setEditForm] = useState<Partial<Member>>({});
   const [editSaving, setEditSaving] = useState(false);
 
-  // 振込確認モーダル
-  const [confirmMember, setConfirmMember] = useState<Member | null>(null);
+  // 振込確認（編集モーダル内）
   const [confirmDate, setConfirmDate] = useState(today());
   const [confirming, setConfirming] = useState(false);
+
+  // 振込履歴（編集モーダル内）
+  const [payHistory, setPayHistory] = useState<string[]>([]);
+  const [payHistLoading, setPayHistLoading] = useState(false);
+  const [deletingDate, setDeletingDate] = useState<string | null>(null);
 
   // 新規追加フォーム
   const [showAdd, setShowAdd] = useState(false);
@@ -102,7 +106,6 @@ export default function AdminPage() {
 
   // ---- セッション確認 ----
   useEffect(() => {
-    // ログイン済みかどうか確認（バックアップ一覧が取れるかで判断）
     fetch("/api/admin/backup").then(async (res) => {
       if (res.ok) {
         setAuthed(true);
@@ -148,39 +151,67 @@ export default function AdminPage() {
     if (bRes.ok) setBackups(await bRes.json());
   }
 
-  // ---- 振込確認 ----
-  function openConfirm(m: Member) {
-    setConfirmMember(m);
+  // ---- 会員編集モーダルを開く ----
+  async function openEdit(m: Member) {
+    setEditMember(m);
+    setEditForm({ ...m });
     setConfirmDate(today());
+    setPayHistory([]);
+    setPayHistLoading(true);
+    const res = await fetch(`/api/admin/payments?memberNumber=${m.memberNumber}`);
+    if (res.ok) setPayHistory(await res.json());
+    setPayHistLoading(false);
   }
 
-  async function handleTransferConfirm() {
-    if (!confirmMember) return;
+  // ---- 振込確認（編集モーダル内） ----
+  async function handleInlineConfirm() {
+    if (!editMember) return;
     setConfirming(true);
     const res = await fetch("/api/admin/transfer-confirm", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        memberNumber: confirmMember.memberNumber,
-        paymentDate: confirmDate,
-      }),
+      body: JSON.stringify({ memberNumber: editMember.memberNumber, paymentDate: confirmDate }),
     });
     if (res.ok) {
       const updated: Member = await res.json();
       setMembers((prev) =>
         prev.map((m) => (m.memberNumber === updated.memberNumber ? updated : m))
       );
-      setConfirmMember(null);
+      setEditMember(updated);
+      setEditForm({ ...updated });
+      // 履歴を再取得
+      const hRes = await fetch(`/api/admin/payments?memberNumber=${updated.memberNumber}`);
+      if (hRes.ok) setPayHistory(await hRes.json());
+      setConfirmDate(today());
     }
     setConfirming(false);
   }
 
-  // ---- 会員編集 ----
-  function openEdit(m: Member) {
-    setEditMember(m);
-    setEditForm({ ...m });
+  // ---- 振込履歴から1件削除 ----
+  async function handleDeletePayment(date: string) {
+    if (!editMember) return;
+    if (!confirm(`${date} の振込記録を削除しますか？`)) return;
+    setDeletingDate(date);
+    const res = await fetch("/api/admin/payments", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ memberNumber: editMember.memberNumber, date }),
+    });
+    if (res.ok) {
+      const data: { history: string[]; member: Member | null } = await res.json();
+      setPayHistory(data.history);
+      if (data.member) {
+        setMembers((prev) =>
+          prev.map((m) => (m.memberNumber === data.member!.memberNumber ? data.member! : m))
+        );
+        setEditMember(data.member);
+        setEditForm({ ...data.member });
+      }
+    }
+    setDeletingDate(null);
   }
 
+  // ---- 会員情報保存 ----
   async function handleEditSave() {
     if (!editMember) return;
     setEditSaving(true);
@@ -201,17 +232,14 @@ export default function AdminPage() {
 
   async function handleDeleteMember() {
     if (!editMember) return;
-    if (!confirm(`${editMember.name}（${editMember.memberNumber}）を削除しますか？`))
-      return;
+    if (!confirm(`${editMember.name}（${editMember.memberNumber}）を削除しますか？`)) return;
     const res = await fetch("/api/admin/members", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ memberNumber: editMember.memberNumber }),
     });
     if (res.ok) {
-      setMembers((prev) =>
-        prev.filter((m) => m.memberNumber !== editMember.memberNumber)
-      );
+      setMembers((prev) => prev.filter((m) => m.memberNumber !== editMember.memberNumber));
       setEditMember(null);
     }
   }
@@ -229,12 +257,7 @@ export default function AdminPage() {
       const member: Member = await res.json();
       setMembers((prev) => [...prev, member]);
       setShowAdd(false);
-      setNewForm({
-        isActive: true,
-        joinDate: today(),
-        lastPaymentDate: null,
-        nextPaymentDate: null,
-      });
+      setNewForm({ isActive: true, joinDate: today(), lastPaymentDate: null, nextPaymentDate: null });
     }
     setAddSaving(false);
   }
@@ -260,19 +283,12 @@ export default function AdminPage() {
     if (!file) return;
     setCsvMsg("");
     setCsvWorking(true);
-
     const formData = new FormData();
     formData.append("file", file);
-
-    const res = await fetch("/api/admin/import-csv", {
-      method: "POST",
-      body: formData,
-    });
+    const res = await fetch("/api/admin/import-csv", { method: "POST", body: formData });
     const data = await res.json();
     if (res.ok) {
-      setCsvMsg(
-        `インポート完了: 追加 ${data.added}件、更新 ${data.updated}件、スキップ ${data.skipped}件（合計 ${data.total}件）`
-      );
+      setCsvMsg(`インポート完了: 追加 ${data.added}件、更新 ${data.updated}件、スキップ ${data.skipped}件（合計 ${data.total}件）`);
       await loadAll();
     } else {
       setCsvMsg(data.error ?? "CSVインポートに失敗しました");
@@ -306,21 +322,18 @@ export default function AdminPage() {
     setBackupWorking(false);
   }
 
-  // ---- 差分インポート ----
+  // ---- 差分インポート（JSON） ----
   async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setImportMsg("");
-
-    const text = await file.text();
     let parsed: unknown;
     try {
-      parsed = JSON.parse(text);
+      parsed = JSON.parse(await file.text());
     } catch {
       setImportMsg("JSONの解析に失敗しました");
       return;
     }
-
     const res = await fetch("/api/admin/backup/import", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -328,9 +341,7 @@ export default function AdminPage() {
     });
     const data = await res.json();
     if (res.ok) {
-      setImportMsg(
-        `インポート完了: 追加 ${data.added.length}件、更新 ${data.updated.length}件、スキップ ${data.skipped.length}件`
-      );
+      setImportMsg(`インポート完了: 追加 ${data.added.length}件、更新 ${data.updated.length}件、スキップ ${data.skipped.length}件`);
       await loadAll();
     } else {
       setImportMsg(data.error ?? "インポートに失敗しました");
@@ -362,9 +373,7 @@ export default function AdminPage() {
               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-pink-400"
               autoFocus
             />
-            {loginError && (
-              <p className="text-red-500 text-xs text-center">{loginError}</p>
-            )}
+            {loginError && <p className="text-red-500 text-xs text-center">{loginError}</p>}
             <button
               type="submit"
               className="w-full bg-pink-400 text-white font-bold py-3 rounded-xl text-sm active:bg-pink-500"
@@ -398,9 +407,7 @@ export default function AdminPage() {
             key={t}
             onClick={() => setTab(t)}
             className={`flex-1 py-3 text-sm font-medium transition-colors ${
-              tab === t
-                ? "text-pink-500 border-b-2 border-pink-500"
-                : "text-gray-500"
+              tab === t ? "text-pink-500 border-b-2 border-pink-500" : "text-gray-500"
             }`}
           >
             {t === "members" ? "会員管理" : "データ管理"}
@@ -417,17 +424,9 @@ export default function AdminPage() {
               {[
                 { label: "総会員数", value: members.length },
                 { label: "有効", value: members.filter((m) => m.isActive).length },
-                {
-                  label: "期限切れ",
-                  value: members.filter(
-                    (m) => m.isActive && isOverdue(m.nextPaymentDate)
-                  ).length,
-                },
+                { label: "期限切れ", value: members.filter((m) => m.isActive && isOverdue(m.nextPaymentDate)).length },
               ].map((s) => (
-                <div
-                  key={s.label}
-                  className="bg-white rounded-xl p-3 border border-gray-100 text-center"
-                >
+                <div key={s.label} className="bg-white rounded-xl p-3 border border-gray-100 text-center">
                   <p className="text-2xl font-bold text-pink-500">{s.value}</p>
                   <p className="text-xs text-gray-400 mt-0.5">{s.label}</p>
                 </div>
@@ -442,60 +441,41 @@ export default function AdminPage() {
               ＋ 会員を追加
             </button>
 
-            {/* 会員リスト */}
+            {/* 会員リスト（名前タップで編集） */}
             {members.length === 0 ? (
-              <p className="text-center text-sm text-gray-400 py-8">
-                会員データがありません
-              </p>
+              <p className="text-center text-sm text-gray-400 py-8">会員データがありません</p>
             ) : (
               <div className="space-y-2">
                 {members.map((m) => (
-                  <div
+                  <button
                     key={m.memberNumber}
-                    className="bg-white rounded-xl border border-gray-100 p-3"
+                    onClick={() => openEdit(m)}
+                    className="w-full bg-white rounded-xl border border-gray-100 p-3 text-left active:bg-gray-50"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
-                        <button
-                          onClick={() => openEdit(m)}
-                          className="text-sm font-bold text-pink-600 underline decoration-dotted text-left"
-                        >
-                          {m.name || m.memberNumber}
-                        </button>
+                        <p className="text-sm font-bold text-pink-600">{m.name || m.memberNumber}</p>
                         <p className="text-xs text-gray-400 mt-0.5">
-                          {m.memberNumber}
-                          {m.email && ` ・ ${m.email}`}
+                          {m.memberNumber}{m.furigana && ` ・ ${m.furigana}`}
                         </p>
                         <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-500">
                           <span>最終振込: {fmtDate(m.lastPaymentDate)}</span>
                           <span>次回: {fmtDate(m.nextPaymentDate)}</span>
                         </div>
                       </div>
-                      <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                        <span
-                          className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                            m.isActive
-                              ? isOverdue(m.nextPaymentDate)
-                                ? "bg-yellow-100 text-yellow-700"
-                                : "bg-green-100 text-green-700"
-                              : "bg-gray-100 text-gray-500"
-                          }`}
-                        >
-                          {m.isActive
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
+                          m.isActive
                             ? isOverdue(m.nextPaymentDate)
-                              ? "期限切れ"
-                              : "有効"
-                            : "無効"}
-                        </span>
-                        <button
-                          onClick={() => openConfirm(m)}
-                          className="text-xs bg-blue-50 text-blue-600 border border-blue-200 rounded-lg px-2.5 py-1 font-medium active:bg-blue-100"
-                        >
-                          振込確認
-                        </button>
-                      </div>
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-green-100 text-green-700"
+                            : "bg-gray-100 text-gray-500"
+                        }`}
+                      >
+                        {m.isActive ? (isOverdue(m.nextPaymentDate) ? "期限切れ" : "有効") : "無効"}
+                      </span>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
@@ -524,7 +504,6 @@ export default function AdminPage() {
               <h2 className="text-sm font-bold text-yellow-800">データ復元（KV→Redis 移行）</h2>
               <p className="text-xs text-yellow-700 leading-relaxed">
                 以前 Vercel KV に保存されていたデータを Redis に移行します。
-                データが消えた場合にお試しください。
               </p>
               <button
                 onClick={handleMigrateKV}
@@ -544,19 +523,12 @@ export default function AdminPage() {
             <div className="bg-white rounded-xl border border-gray-100 p-4 space-y-3">
               <h2 className="text-sm font-bold">CSVインポート</h2>
               <p className="text-xs text-gray-500 leading-relaxed">
-                CSVファイルから会員データを一括登録します。
-                列の順序: 会員NO・名前・フリガナ・〒・住所・電話番号・メールアドレス・入会日(振込日)・更新日①②...・生年月日
+                CSVファイルから会員データを一括登録します。振込履歴も別テーブルに保存します。
               </p>
               <p className="text-xs text-gray-400 leading-relaxed">
-                ※ パスワードは会員番号で自動設定されます。有効期限は最終振込日+1年で判定します。
+                ※ パスワードは生年月日8桁（YYYYMMDD）、生年月日なしの場合は会員番号を設定します。
               </p>
-              <input
-                ref={csvRef}
-                type="file"
-                accept=".csv,text/csv"
-                className="hidden"
-                onChange={handleCsvImport}
-              />
+              <input ref={csvRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleCsvImport} />
               <button
                 onClick={() => csvRef.current?.click()}
                 disabled={csvWorking}
@@ -565,31 +537,19 @@ export default function AdminPage() {
                 {csvWorking ? "処理中..." : "CSVファイルを選択してインポート"}
               </button>
               {csvMsg && (
-                <p
-                  className={`text-xs text-center ${
-                    csvMsg.startsWith("インポート完了")
-                      ? "text-green-600"
-                      : "text-red-500"
-                  }`}
-                >
+                <p className={`text-xs text-center ${csvMsg.startsWith("インポート完了") ? "text-green-600" : "text-red-500"}`}>
                   {csvMsg}
                 </p>
               )}
             </div>
 
+            {/* JSON差分インポート */}
             <div className="bg-white rounded-xl border border-gray-100 p-4 space-y-3">
               <h2 className="text-sm font-bold">差分インポート（JSON）</h2>
               <p className="text-xs text-gray-500 leading-relaxed">
                 JSONファイルを選択すると、更新が新しい会員データのみ上書きします。
-                インポート前に自動バックアップを作成します。
               </p>
-              <input
-                ref={importRef}
-                type="file"
-                accept="application/json,.json"
-                className="hidden"
-                onChange={handleImport}
-              />
+              <input ref={importRef} type="file" accept="application/json,.json" className="hidden" onChange={handleImport} />
               <button
                 onClick={() => importRef.current?.click()}
                 className="w-full py-2.5 border border-gray-200 text-gray-700 font-medium rounded-xl text-sm active:bg-gray-50"
@@ -597,40 +557,26 @@ export default function AdminPage() {
                 JSONファイルを選択してインポート
               </button>
               {importMsg && (
-                <p
-                  className={`text-xs text-center ${
-                    importMsg.startsWith("インポート完了")
-                      ? "text-green-600"
-                      : "text-red-500"
-                  }`}
-                >
+                <p className={`text-xs text-center ${importMsg.startsWith("インポート完了") ? "text-green-600" : "text-red-500"}`}>
                   {importMsg}
                 </p>
               )}
             </div>
 
+            {/* バックアップ履歴 */}
             <div className="bg-white rounded-xl border border-gray-100 p-4">
-              <h2 className="text-sm font-bold mb-3">
-                バックアップ履歴 ({backups.length}件)
-              </h2>
+              <h2 className="text-sm font-bold mb-3">バックアップ履歴 ({backups.length}件)</h2>
               {backups.length === 0 ? (
-                <p className="text-xs text-gray-400 text-center py-4">
-                  バックアップはありません
-                </p>
+                <p className="text-xs text-gray-400 text-center py-4">バックアップはありません</p>
               ) : (
                 <div className="space-y-2">
                   {backups.map((b) => (
-                    <div
-                      key={b.id}
-                      className="flex items-center justify-between gap-2 py-2 border-b border-gray-50 last:border-0"
-                    >
+                    <div key={b.id} className="flex items-center justify-between gap-2 py-2 border-b border-gray-50 last:border-0">
                       <div>
                         <p className="text-xs font-medium text-gray-700">
                           {new Date(b.timestamp).toLocaleString("ja-JP")}
                         </p>
-                        <p className="text-xs text-gray-400">
-                          {b.memberCount}名{b.label ? ` ・ ${b.label}` : ""}
-                        </p>
+                        <p className="text-xs text-gray-400">{b.memberCount}名{b.label ? ` ・ ${b.label}` : ""}</p>
                       </div>
                       <a
                         href={`/api/admin/backup?id=${b.id}`}
@@ -648,121 +594,113 @@ export default function AdminPage() {
         )}
       </div>
 
-      {/* ====== 振込確認モーダル ====== */}
-      {confirmMember && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-sm p-6 space-y-4">
-            <h2 className="font-bold text-base">振込確認</h2>
-            <div className="bg-gray-50 rounded-xl p-3 text-sm">
-              <p className="font-medium">{confirmMember.name}</p>
-              <p className="text-gray-500 text-xs">{confirmMember.memberNumber}</p>
-            </div>
-            <div>
-              <label className="text-xs text-gray-500 block mb-1">振込日</label>
-              <input
-                type="date"
-                value={confirmDate}
-                onChange={(e) => setConfirmDate(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-pink-400"
-              />
-            </div>
-            <div className="bg-blue-50 rounded-xl p-3 text-xs text-blue-700 space-y-1">
-              <p>振込日: {confirmDate}</p>
-              <p>次回振込日: {nextYear(confirmDate)}</p>
-              <p>有効状態: 有効に変更</p>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setConfirmMember(null)}
-                className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium active:bg-gray-50"
-              >
-                キャンセル
-              </button>
-              <button
-                onClick={handleTransferConfirm}
-                disabled={confirming}
-                className="flex-1 py-2.5 bg-blue-500 text-white font-bold rounded-xl text-sm disabled:opacity-60 active:bg-blue-600"
-              >
-                {confirming ? "処理中..." : "確認する"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ====== 会員編集モーダル ====== */}
+      {/* ====== 会員編集モーダル（名前タップで開く） ====== */}
       {editMember && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 flex items-center justify-between">
-              <h2 className="font-bold text-base">会員情報の編集</h2>
-              <button
-                onClick={() => setEditMember(null)}
-                className="text-gray-400 text-xl leading-none"
-              >
-                ✕
-              </button>
+            {/* ヘッダー */}
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 flex items-center justify-between z-10">
+              <div>
+                <p className="font-bold text-base">{editMember.name}</p>
+                <p className="text-xs text-gray-400">{editMember.memberNumber}</p>
+              </div>
+              <button onClick={() => setEditMember(null)} className="text-gray-400 text-xl leading-none">✕</button>
             </div>
-            <div className="p-5 space-y-4">
-              <button
-                onClick={() => {
-                  setEditMember(null);
-                  openConfirm(editMember);
-                }}
-                className="w-full py-2.5 bg-blue-50 text-blue-600 border border-blue-200 font-bold rounded-xl text-sm active:bg-blue-100"
-              >
-                振込確認を行う
-              </button>
 
-              {[
-                { label: "会員番号", key: "memberNumber", type: "text", disabled: true },
-                { label: "氏名", key: "name", type: "text" },
-                { label: "フリガナ", key: "furigana", type: "text" },
-                { label: "郵便番号", key: "zipCode", type: "text" },
-                { label: "住所", key: "address", type: "text" },
-                { label: "電話番号", key: "phone", type: "tel" },
-                { label: "メールアドレス", key: "email", type: "email" },
-                { label: "生年月日", key: "birthday", type: "date" },
-                { label: "パスワード", key: "password", type: "text" },
-                { label: "入会日", key: "joinDate", type: "date" },
-                { label: "最終振込日", key: "lastPaymentDate", type: "date" },
-                { label: "次回振込日", key: "nextPaymentDate", type: "date" },
-                { label: "備考", key: "notes", type: "text" },
-              ].map(({ label, key, type, disabled }) => (
-                <div key={key}>
-                  <label className="text-xs text-gray-500 block mb-1">{label}</label>
+            <div className="p-5 space-y-5">
+              {/* ── 振込確認 ── */}
+              <div className="bg-blue-50 rounded-xl p-4 space-y-3 border border-blue-100">
+                <p className="text-xs font-bold text-blue-700">振込確認</p>
+                <div>
+                  <label className="text-xs text-blue-600 block mb-1">振込日</label>
                   <input
-                    type={type}
-                    value={
-                      (editForm[key as keyof Member] as string | null | undefined) ?? ""
-                    }
-                    onChange={(e) =>
-                      setEditForm((f) => ({ ...f, [key]: e.target.value || null }))
-                    }
-                    disabled={disabled}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-pink-400 disabled:bg-gray-50 disabled:text-gray-400"
+                    type="date"
+                    value={confirmDate}
+                    onChange={(e) => setConfirmDate(e.target.value)}
+                    className="w-full border border-blue-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-blue-400 bg-white"
                   />
                 </div>
-              ))}
-
-              <div className="flex items-center justify-between py-2">
-                <span className="text-sm font-medium">会員有効状態</span>
+                <p className="text-xs text-blue-600">次回振込日: {confirmDate ? nextYear(confirmDate) : "—"}</p>
                 <button
-                  onClick={() =>
-                    setEditForm((f) => ({ ...f, isActive: !f.isActive }))
-                  }
-                  className={`relative w-12 h-6 rounded-full transition-colors ${
-                    editForm.isActive ? "bg-green-400" : "bg-gray-300"
-                  }`}
+                  onClick={handleInlineConfirm}
+                  disabled={confirming || !confirmDate}
+                  className="w-full py-2 bg-blue-500 text-white font-bold rounded-xl text-sm disabled:opacity-60 active:bg-blue-600"
                 >
-                  <span
-                    className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                      editForm.isActive ? "translate-x-6" : "translate-x-0.5"
-                    }`}
-                  />
+                  {confirming ? "処理中..." : "振込確認する"}
                 </button>
               </div>
 
+              {/* ── 振込履歴 ── */}
+              <div>
+                <p className="text-xs font-bold text-gray-500 mb-2">振込履歴</p>
+                {payHistLoading ? (
+                  <p className="text-xs text-gray-400 text-center py-2">読み込み中...</p>
+                ) : payHistory.length === 0 ? (
+                  <p className="text-xs text-gray-400 text-center py-2">履歴がありません</p>
+                ) : (
+                  <div className="space-y-1">
+                    {[...payHistory].reverse().map((date) => (
+                      <div key={date} className="flex items-center justify-between py-1.5 border-b border-gray-50">
+                        <span className="text-sm text-gray-700">{date}</span>
+                        <button
+                          onClick={() => handleDeletePayment(date)}
+                          disabled={deletingDate === date}
+                          className="text-xs text-red-400 border border-red-200 rounded-lg px-2 py-0.5 active:bg-red-50 disabled:opacity-50"
+                        >
+                          {deletingDate === date ? "..." : "削除"}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* ── 基本情報 ── */}
+              <div className="space-y-4">
+                <p className="text-xs font-bold text-gray-500">基本情報</p>
+
+                {[
+                  { label: "会員番号", key: "memberNumber", type: "text", disabled: true },
+                  { label: "氏名", key: "name", type: "text" },
+                  { label: "フリガナ", key: "furigana", type: "text" },
+                  { label: "郵便番号", key: "zipCode", type: "text" },
+                  { label: "住所", key: "address", type: "text" },
+                  { label: "電話番号", key: "phone", type: "tel" },
+                  { label: "メールアドレス", key: "email", type: "email" },
+                  { label: "生年月日", key: "birthday", type: "date" },
+                  { label: "パスワード", key: "password", type: "text" },
+                  { label: "入会日", key: "joinDate", type: "date" },
+                  { label: "備考", key: "notes", type: "text" },
+                ].map(({ label, key, type, disabled }) => (
+                  <div key={key}>
+                    <label className="text-xs text-gray-500 block mb-1">{label}</label>
+                    <input
+                      type={type}
+                      value={(editForm[key as keyof Member] as string | null | undefined) ?? ""}
+                      onChange={(e) => setEditForm((f) => ({ ...f, [key]: e.target.value || null }))}
+                      disabled={disabled}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-pink-400 disabled:bg-gray-50 disabled:text-gray-400"
+                    />
+                  </div>
+                ))}
+
+                {/* 有効状態トグル */}
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-sm font-medium">会員有効状態</span>
+                  <button
+                    onClick={() => setEditForm((f) => ({ ...f, isActive: !f.isActive }))}
+                    className={`relative w-12 h-6 rounded-full transition-colors ${editForm.isActive ? "bg-green-400" : "bg-gray-300"}`}
+                  >
+                    <span
+                      className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                        editForm.isActive ? "translate-x-6" : "translate-x-0.5"
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              {/* 操作ボタン */}
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={handleDeleteMember}
@@ -789,34 +727,28 @@ export default function AdminPage() {
           <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 flex items-center justify-between">
               <h2 className="font-bold text-base">会員を追加</h2>
-              <button
-                onClick={() => setShowAdd(false)}
-                className="text-gray-400 text-xl leading-none"
-              >
-                ✕
-              </button>
+              <button onClick={() => setShowAdd(false)} className="text-gray-400 text-xl leading-none">✕</button>
             </div>
             <form onSubmit={handleAddMember} className="p-5 space-y-4">
               {[
                 { label: "会員番号 *", key: "memberNumber", type: "text", required: true },
                 { label: "氏名 *", key: "name", type: "text", required: true },
+                { label: "フリガナ", key: "furigana", type: "text" },
+                { label: "郵便番号", key: "zipCode", type: "text" },
+                { label: "住所", key: "address", type: "text" },
+                { label: "電話番号", key: "phone", type: "tel" },
                 { label: "メールアドレス", key: "email", type: "email" },
+                { label: "生年月日", key: "birthday", type: "date" },
                 { label: "パスワード *", key: "password", type: "text", required: true },
                 { label: "入会日", key: "joinDate", type: "date" },
-                { label: "最終振込日", key: "lastPaymentDate", type: "date" },
-                { label: "次回振込日", key: "nextPaymentDate", type: "date" },
                 { label: "備考", key: "notes", type: "text" },
               ].map(({ label, key, type, required }) => (
                 <div key={key}>
                   <label className="text-xs text-gray-500 block mb-1">{label}</label>
                   <input
                     type={type}
-                    value={
-                      (newForm[key as keyof Member] as string | null | undefined) ?? ""
-                    }
-                    onChange={(e) =>
-                      setNewForm((f) => ({ ...f, [key]: e.target.value || null }))
-                    }
+                    value={(newForm[key as keyof Member] as string | null | undefined) ?? ""}
+                    onChange={(e) => setNewForm((f) => ({ ...f, [key]: e.target.value || null }))}
                     required={required}
                     className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-pink-400"
                   />
@@ -827,12 +759,8 @@ export default function AdminPage() {
                 <span className="text-sm font-medium">会員有効状態</span>
                 <button
                   type="button"
-                  onClick={() =>
-                    setNewForm((f) => ({ ...f, isActive: !f.isActive }))
-                  }
-                  className={`relative w-12 h-6 rounded-full transition-colors ${
-                    newForm.isActive ? "bg-green-400" : "bg-gray-300"
-                  }`}
+                  onClick={() => setNewForm((f) => ({ ...f, isActive: !f.isActive }))}
+                  className={`relative w-12 h-6 rounded-full transition-colors ${newForm.isActive ? "bg-green-400" : "bg-gray-300"}`}
                 >
                   <span
                     className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
