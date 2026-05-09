@@ -7,7 +7,12 @@ import { useEffect, useRef, useState } from "react";
 interface Member {
   memberNumber: string;
   name: string;
+  furigana?: string;
+  zipCode?: string;
+  address?: string;
+  phone?: string;
   email?: string;
+  birthday?: string;
   password: string;
   isActive: boolean;
   joinDate: string;
@@ -79,9 +84,14 @@ export default function AdminPage() {
   });
   const [addSaving, setAddSaving] = useState(false);
 
-  // インポート
+  // JSONインポート
   const importRef = useRef<HTMLInputElement>(null);
   const [importMsg, setImportMsg] = useState("");
+
+  // Excelインポート
+  const excelRef = useRef<HTMLInputElement>(null);
+  const [excelMsg, setExcelMsg] = useState("");
+  const [excelWorking, setExcelWorking] = useState(false);
 
   // バックアップ作成中
   const [backupWorking, setBackupWorking] = useState(false);
@@ -242,6 +252,33 @@ export default function AdminPage() {
       setMigrateMsg(data.error ?? "移行に失敗しました");
     }
     setMigrating(false);
+  }
+
+  // ---- Excelインポート ----
+  async function handleExcelImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setExcelMsg("");
+    setExcelWorking(true);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch("/api/admin/import-excel", {
+      method: "POST",
+      body: formData,
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setExcelMsg(
+        `インポート完了: 追加 ${data.added}件、更新 ${data.updated}件、スキップ ${data.skipped}件（合計 ${data.total}件）`
+      );
+      await loadAll();
+    } else {
+      setExcelMsg(data.error ?? "Excelインポートに失敗しました");
+    }
+    setExcelWorking(false);
+    e.target.value = "";
   }
 
   // ---- バックアップ作成＆ダウンロード ----
@@ -503,8 +540,45 @@ export default function AdminPage() {
               )}
             </div>
 
+            {/* Excelインポート */}
             <div className="bg-white rounded-xl border border-gray-100 p-4 space-y-3">
-              <h2 className="text-sm font-bold">差分インポート</h2>
+              <h2 className="text-sm font-bold">Excelインポート</h2>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Excelファイル（.xlsx/.xls）から会員データを一括登録します。
+                列の順序: 会員NO・名前・フリガナ・〒・住所・電話番号・メールアドレス・入会日(振込日)・更新日①②...・生年月日
+              </p>
+              <p className="text-xs text-gray-400 leading-relaxed">
+                ※ パスワードは会員番号で自動設定されます。有効期限は最終振込日+1年で判定します。
+              </p>
+              <input
+                ref={excelRef}
+                type="file"
+                accept=".xlsx,.xls"
+                className="hidden"
+                onChange={handleExcelImport}
+              />
+              <button
+                onClick={() => excelRef.current?.click()}
+                disabled={excelWorking}
+                className="w-full py-2.5 bg-green-500 text-white font-bold rounded-xl text-sm disabled:opacity-60 active:bg-green-600"
+              >
+                {excelWorking ? "処理中..." : "Excelファイルを選択してインポート"}
+              </button>
+              {excelMsg && (
+                <p
+                  className={`text-xs text-center ${
+                    excelMsg.startsWith("インポート完了")
+                      ? "text-green-600"
+                      : "text-red-500"
+                  }`}
+                >
+                  {excelMsg}
+                </p>
+              )}
+            </div>
+
+            <div className="bg-white rounded-xl border border-gray-100 p-4 space-y-3">
+              <h2 className="text-sm font-bold">差分インポート（JSON）</h2>
               <p className="text-xs text-gray-500 leading-relaxed">
                 JSONファイルを選択すると、更新が新しい会員データのみ上書きします。
                 インポート前に自動バックアップを作成します。
@@ -643,7 +717,12 @@ export default function AdminPage() {
               {[
                 { label: "会員番号", key: "memberNumber", type: "text", disabled: true },
                 { label: "氏名", key: "name", type: "text" },
+                { label: "フリガナ", key: "furigana", type: "text" },
+                { label: "郵便番号", key: "zipCode", type: "text" },
+                { label: "住所", key: "address", type: "text" },
+                { label: "電話番号", key: "phone", type: "tel" },
                 { label: "メールアドレス", key: "email", type: "email" },
+                { label: "生年月日", key: "birthday", type: "date" },
                 { label: "パスワード", key: "password", type: "text" },
                 { label: "入会日", key: "joinDate", type: "date" },
                 { label: "最終振込日", key: "lastPaymentDate", type: "date" },

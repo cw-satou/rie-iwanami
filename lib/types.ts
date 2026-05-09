@@ -46,7 +46,12 @@ export interface MemberSession {
 export interface Member {
   memberNumber: string;
   name: string;
+  furigana?: string;          // フリガナ
+  zipCode?: string;           // 郵便番号
+  address?: string;           // 住所
+  phone?: string;             // 電話番号
   email?: string;
+  birthday?: string;          // 生年月日 YYYY-MM-DD
   password: string;
   isActive: boolean;
   joinDate: string;           // YYYY-MM-DD
