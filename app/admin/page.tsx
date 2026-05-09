@@ -52,6 +52,19 @@ function isOverdue(nextDate: string | null): boolean {
   return nextDate < today();
 }
 
+function isThisMonth(nextDate: string | null): boolean {
+  if (!nextDate) return false;
+  return nextDate.startsWith(new Date().toISOString().slice(0, 7));
+}
+
+// "active" | "thisMonth" | "inactive"
+function memberStatus(m: Member): "active" | "thisMonth" | "inactive" {
+  if (!m.isActive) return "inactive";
+  if (isThisMonth(m.nextPaymentDate)) return "thisMonth";
+  if (isOverdue(m.nextPaymentDate)) return "inactive";
+  return "active";
+}
+
 // ---- メインコンポーネント ----
 
 export default function AdminPage() {
@@ -425,8 +438,8 @@ export default function AdminPage() {
             <div className="grid grid-cols-3 gap-3">
               {[
                 { label: "総会員数", value: members.length },
-                { label: "有効", value: members.filter((m) => m.isActive).length },
-                { label: "期限切れ", value: members.filter((m) => m.isActive && isOverdue(m.nextPaymentDate)).length },
+                { label: "有効", value: members.filter((m) => memberStatus(m) !== "inactive").length },
+                { label: "無効", value: members.filter((m) => memberStatus(m) === "inactive").length },
               ].map((s) => (
                 <div key={s.label} className="bg-white rounded-xl p-3 border border-gray-100 text-center">
                   <p className="text-2xl font-bold text-pink-500">{s.value}</p>
@@ -505,8 +518,8 @@ export default function AdminPage() {
                             if (!matchText) return false;
                           }
                           // 絞り込みボタン
-                          if (memberFilter === "active") return m.isActive;
-                          if (memberFilter === "inactive") return !m.isActive;
+                          if (memberFilter === "active") return memberStatus(m) !== "inactive";
+                          if (memberFilter === "inactive") return memberStatus(m) === "inactive";
                           if (memberFilter === "thisMonth") {
                             if (!m.isActive || !m.nextPaymentDate) return false;
                             const ym = new Date().toISOString().slice(0, 7);
@@ -525,17 +538,22 @@ export default function AdminPage() {
                             <td className="px-3 py-2.5 text-xs text-gray-700 whitespace-nowrap">{fmtDate(m.lastPaymentDate)}</td>
                             <td className="px-3 py-2.5 text-xs text-gray-700 whitespace-nowrap">{fmtDate(m.nextPaymentDate)}</td>
                             <td className="px-3 py-2.5 whitespace-nowrap">
-                              <span
-                                className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                                  m.isActive
-                                    ? isOverdue(m.nextPaymentDate)
-                                      ? "bg-yellow-100 text-yellow-700"
-                                      : "bg-green-100 text-green-700"
-                                    : "bg-gray-100 text-gray-500"
-                                }`}
-                              >
-                                {m.isActive ? (isOverdue(m.nextPaymentDate) ? "期限切れ" : "有効") : "無効"}
-                              </span>
+                              {(() => {
+                                const s = memberStatus(m);
+                                return (
+                                  <span
+                                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                      s === "active"
+                                        ? "bg-green-100 text-green-700"
+                                        : s === "thisMonth"
+                                        ? "bg-yellow-100 text-yellow-700"
+                                        : "bg-gray-100 text-gray-500"
+                                    }`}
+                                  >
+                                    {s === "active" ? "有効" : s === "thisMonth" ? "今月期限" : "無効"}
+                                  </span>
+                                );
+                              })()}
                             </td>
                           </tr>
                         ))}
