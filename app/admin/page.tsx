@@ -289,7 +289,7 @@ export default function AdminPage() {
     const res = await fetch("/api/admin/import-csv", { method: "POST", body: formData });
     const data = await res.json();
     if (res.ok) {
-      setCsvMsg(`インポート完了: 追加 ${data.added}件、更新 ${data.updated}件、スキップ ${data.skipped}件（合計 ${data.total}件）`);
+      setCsvMsg(`インポート完了: 追加 ${data.added}件、更新 ${data.updated}件（合計 ${data.total}件）`);
       await loadAll();
     } else {
       setCsvMsg(data.error ?? "CSVインポートに失敗しました");
@@ -434,22 +434,22 @@ export default function AdminPage() {
               ))}
             </div>
 
-            {/* 操作バー */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="会員番号・名前で検索"
-                value={memberSearch}
-                onChange={(e) => setMemberSearch(e.target.value)}
-                className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-pink-400"
-              />
-              <button
-                onClick={() => setShowAdd(true)}
-                className="px-4 py-2 rounded-xl border-2 border-dashed border-pink-200 text-sm text-pink-400 font-medium active:bg-pink-50 whitespace-nowrap"
-              >
-                ＋ 追加
-              </button>
-            </div>
+            {/* 検索 */}
+            <input
+              type="text"
+              placeholder="会員番号・名前・フリガナで絞り込み"
+              value={memberSearch}
+              onChange={(e) => setMemberSearch(e.target.value)}
+              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-pink-400"
+            />
+
+            {/* 会員追加ボタン */}
+            <button
+              onClick={() => setShowAdd(true)}
+              className="w-full py-2.5 rounded-xl border-2 border-dashed border-pink-200 text-sm text-pink-400 font-medium active:bg-pink-50"
+            >
+              ＋ 会員を追加
+            </button>
 
             {/* 会員テーブル */}
             {members.length === 0 ? (

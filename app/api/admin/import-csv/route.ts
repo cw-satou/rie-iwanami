@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/admin-auth";
-import { importMembers, getPaymentHistoryAll, setPaymentHistoryAll } from "@/lib/member-store";
+import { getMembers, setMembers, getPaymentHistoryAll, setPaymentHistoryAll } from "@/lib/member-store";
 import { Member, MembersRecord } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -156,8 +156,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "インポートできる行がありませんでした" }, { status: 400 });
   }
 
-  // 会員データの差分インポート
-  const { added, updated, skipped } = await importMembers(newMembers);
+  // CSVインポートは常に強制上書き（既存データのlastPaymentDateなどをCSV値で更新）
+  const current = await getMembers();
+  let added = 0, updated = 0;
+  for (const [num, member] of Object.entries(newMembers)) {
+    if (!current[num]) {
+      current[num] = member;
+      added++;
+    } else {
+      current[num] = { ...current[num], ...member };
+      updated++;
+    }
+  }
+  await setMembers(current);
 
   // 振込履歴を既存データとマージして保存
   if (Object.keys(payHistMap).length > 0) {
@@ -172,9 +183,8 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     ok: true,
-    added: added.length,
-    updated: updated.length,
-    skipped: skipped.length,
+    added,
+    updated,
     total: Object.keys(newMembers).length,
   });
 }
