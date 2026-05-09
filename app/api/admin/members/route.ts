@@ -1,40 +1,60 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/admin-auth";
-import { getAllMembers, createMember, toPublic } from "@/lib/members";
+import { getMembers, upsertMember, deleteMember } from "@/lib/member-store";
+import { Member } from "@/lib/types";
 
-async function requireAdmin() {
-  const ok = await getAdminSession();
-  if (!ok) return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
-  return null;
+export const dynamic = "force-dynamic";
+
+function unauthorized() {
+  return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
 }
 
+// 全会員取得
 export async function GET() {
-  const denied = await requireAdmin();
-  if (denied) return denied;
-
-  const members = await getAllMembers();
-  return NextResponse.json({ members: members.map(toPublic) });
+  if (!(await getAdminSession())) return unauthorized();
+  const members = await getMembers();
+  return NextResponse.json(Object.values(members));
 }
 
-export async function POST(request: Request) {
-  const denied = await requireAdmin();
-  if (denied) return denied;
+// 会員追加・更新
+export async function POST(req: NextRequest) {
+  if (!(await getAdminSession())) return unauthorized();
 
-  const { memberNumber, name, password } = await request.json();
+  const body = await req.json() as Partial<Member>;
 
-  if (!memberNumber || !name || !password) {
-    return NextResponse.json({ error: "会員番号・名前・パスワードは必須です" }, { status: 400 });
-  }
-  if (password.length < 6) {
-    return NextResponse.json({ error: "パスワードは6文字以上にしてください" }, { status: 400 });
+  if (!body.memberNumber) {
+    return NextResponse.json({ error: "会員番号は必須です" }, { status: 400 });
   }
 
-  const result = await createMember(memberNumber.trim(), name.trim(), password);
-  if (!result.success) {
-    return NextResponse.json({ error: result.error }, { status: 409 });
-  }
+  const now = new Date().toISOString();
+  const members = await getMembers();
+  const existing = members[body.memberNumber];
 
-  const { getMember } = await import("@/lib/members");
-  const created = await getMember(memberNumber.trim());
-  return NextResponse.json({ member: toPublic(created!) }, { status: 201 });
+  const member: Member = {
+    memberNumber: body.memberNumber,
+    name: body.name ?? existing?.name ?? "",
+    email: body.email ?? existing?.email,
+    password: body.password ?? existing?.password ?? "",
+    isActive: body.isActive ?? existing?.isActive ?? true,
+    joinDate: body.joinDate ?? existing?.joinDate ?? now.slice(0, 10),
+    lastPaymentDate: body.lastPaymentDate ?? existing?.lastPaymentDate ?? null,
+    nextPaymentDate: body.nextPaymentDate ?? existing?.nextPaymentDate ?? null,
+    notes: body.notes ?? existing?.notes,
+    createdAt: existing?.createdAt ?? now,
+    updatedAt: now,
+  };
+
+  await upsertMember(member);
+  return NextResponse.json(member);
+}
+
+// 会員削除
+export async function DELETE(req: NextRequest) {
+  if (!(await getAdminSession())) return unauthorized();
+  const { memberNumber } = await req.json();
+  if (!memberNumber) {
+    return NextResponse.json({ error: "会員番号は必須です" }, { status: 400 });
+  }
+  await deleteMember(memberNumber);
+  return NextResponse.json({ ok: true });
 }

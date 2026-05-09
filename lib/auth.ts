@@ -1,22 +1,6 @@
 import { cookies } from "next/headers";
 import { MemberSession } from "./types";
-
-// ---------------------------------------------------------------------------
-// Fallback credentials for local dev / migration period
-// Read from FC_MEMBERS env var (JSON) or use hardcoded demo values.
-// Once members are registered via the admin panel, KV takes precedence.
-// ---------------------------------------------------------------------------
-
-function getFallbackMembers(): Record<string, string> {
-  if (process.env.FC_MEMBERS) {
-    try {
-      return JSON.parse(process.env.FC_MEMBERS);
-    } catch {
-      console.error("FC_MEMBERS env var is not valid JSON");
-    }
-  }
-  return { FC001: "iwanami2024", FC002: "rieclub2024" };
-}
+import { getMember } from "./member-store";
 
 function generateToken(): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -27,16 +11,12 @@ function generateToken(): string {
   return result;
 }
 
-// ---------------------------------------------------------------------------
-// Session store: Vercel KV when configured, in-memory otherwise
-// ---------------------------------------------------------------------------
-
+// KVが使える場合はセッションもKVへ、なければインメモリ
 type SessionData = { memberNumber: string; expiresAt: number };
-
 const memSessions = new Map<string, SessionData>();
 
 function isKVEnabled(): boolean {
-  return Boolean(process.env.KV_REST_API_URL);
+  return Boolean(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
 }
 
 async function sessionSet(token: string, data: SessionData): Promise<void> {
@@ -66,28 +46,22 @@ async function sessionDelete(token: string): Promise<void> {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
-
 export async function login(
   memberNumber: string,
   password: string
 ): Promise<{ success: boolean; token?: string; error?: string }> {
-  // 1. Check KV-based members first (hashed passwords, admin-managed)
-  const { verifyMemberCredentials } = await import("./members");
-  const kvValid = await verifyMemberCredentials(memberNumber, password);
+  const member = await getMember(memberNumber);
 
-  if (!kvValid) {
-    // 2. Fall back to env var / hardcoded (plain-text, backward compat)
-    const fallback = getFallbackMembers();
-    if (!fallback[memberNumber] || fallback[memberNumber] !== password) {
-      return { success: false, error: "会員番号またはパスワードが正しくありません" };
-    }
+  if (!member || member.password !== password) {
+    return { success: false, error: "会員番号またはパスワードが正しくありません" };
+  }
+
+  if (!member.isActive) {
+    return { success: false, error: "会員資格が有効ではありません" };
   }
 
   const token = generateToken();
-  const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
+  const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7日間
 
   await sessionSet(token, { memberNumber, expiresAt });
 

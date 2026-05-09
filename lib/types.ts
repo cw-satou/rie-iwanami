@@ -41,3 +41,29 @@ export interface MemberSession {
   memberNumber: string;
   loggedIn: boolean;
 }
+
+// 会員データ（振込管理付き）
+export interface Member {
+  memberNumber: string;
+  name: string;
+  email?: string;
+  password: string;
+  isActive: boolean;
+  joinDate: string;           // YYYY-MM-DD
+  lastPaymentDate: string | null;  // YYYY-MM-DD
+  nextPaymentDate: string | null;  // YYYY-MM-DD
+  notes?: string;
+  createdAt: string;          // ISO timestamp
+  updatedAt: string;          // ISO timestamp
+}
+
+// KV/JSONストアの構造
+export type MembersRecord = Record<string, Member>;
+
+// バックアップエントリのメタ情報
+export interface BackupEntry {
+  id: string;           // タイムスタンプ文字列（キー）
+  timestamp: string;    // ISO timestamp
+  memberCount: number;
+  label?: string;
+}

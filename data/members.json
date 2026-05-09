@@ -1,0 +1,30 @@
+{
+  "members": {
+    "FC001": {
+      "memberNumber": "FC001",
+      "name": "会員001",
+      "password": "iwanami2024",
+      "isActive": true,
+      "joinDate": "2024-01-01",
+      "lastPaymentDate": "2024-01-01",
+      "nextPaymentDate": "2025-01-01",
+      "notes": "",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    },
+    "FC002": {
+      "memberNumber": "FC002",
+      "name": "会員002",
+      "password": "rieclub2024",
+      "isActive": true,
+      "joinDate": "2024-01-01",
+      "lastPaymentDate": "2024-01-01",
+      "nextPaymentDate": "2025-01-01",
+      "notes": "",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  },
+  "backups": [],
+  "lastUpdated": "2024-01-01T00:00:00.000Z"
+}
