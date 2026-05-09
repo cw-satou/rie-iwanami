@@ -403,25 +403,25 @@ export default function AdminPage() {
 
   // ---- 管理者ダッシュボード ----
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
       {/* ヘッダー */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
-        <h1 className="font-bold text-base">管理者ページ</h1>
+      <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between flex-shrink-0 z-10">
+        <h1 className="font-bold text-sm">管理者ページ</h1>
         <button
           onClick={handleLogout}
-          className="text-xs text-gray-500 border border-gray-200 rounded-full px-3 py-1.5 active:bg-gray-50"
+          className="text-xs text-gray-500 border border-gray-200 rounded-full px-3 py-1 active:bg-gray-50"
         >
           ログアウト
         </button>
       </div>
 
       {/* タブ */}
-      <div className="flex border-b border-gray-200 bg-white">
+      <div className="flex border-b border-gray-200 bg-white flex-shrink-0">
         {(["members", "backup"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`flex-1 py-3 text-sm font-medium transition-colors ${
+            className={`flex-1 py-2 text-sm font-medium transition-colors ${
               tab === t ? "text-pink-500 border-b-2 border-pink-500" : "text-gray-500"
             }`}
           >
@@ -430,20 +430,21 @@ export default function AdminPage() {
         ))}
       </div>
 
-      <div className="p-4">
-        {/* ====== 会員管理タブ ====== */}
-        {tab === "members" && (
-          <div className="space-y-3">
+      {/* ====== 会員管理タブ ====== */}
+      {tab === "members" && (
+        <>
+          {/* コントロール（スクロールしない固定エリア） */}
+          <div className="flex-shrink-0 px-3 pt-2 pb-1.5 space-y-1.5 bg-gray-50">
             {/* 統計 */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               {[
                 { label: "総会員数", value: members.length },
                 { label: "有効", value: members.filter((m) => memberStatus(m) !== "inactive").length },
                 { label: "無効", value: members.filter((m) => memberStatus(m) === "inactive").length },
               ].map((s) => (
-                <div key={s.label} className="bg-white rounded-xl p-3 border border-gray-100 text-center">
-                  <p className="text-2xl font-bold text-pink-500">{s.value}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{s.label}</p>
+                <div key={s.label} className="bg-white rounded-xl p-2 border border-gray-100 text-center">
+                  <p className="text-xl font-bold text-pink-500">{s.value}</p>
+                  <p className="text-xs text-gray-400">{s.label}</p>
                 </div>
               ))}
             </div>
@@ -454,11 +455,11 @@ export default function AdminPage() {
               placeholder="会員番号・名前・フリガナで絞り込み"
               value={memberSearch}
               onChange={(e) => setMemberSearch(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-pink-400"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-pink-400"
             />
 
             {/* 絞り込みボタン */}
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
               {(
                 [
                   { key: "all",       label: "すべて" },
@@ -470,7 +471,7 @@ export default function AdminPage() {
                 <button
                   key={key}
                   onClick={() => setMemberFilter(key)}
-                  className={`flex-1 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                  className={`flex-1 py-1 rounded-full text-xs font-medium border transition-colors ${
                     memberFilter === key
                       ? "bg-pink-400 text-white border-pink-400"
                       : "bg-white text-gray-500 border-gray-200 active:bg-gray-50"
@@ -484,89 +485,87 @@ export default function AdminPage() {
             {/* 会員追加ボタン */}
             <button
               onClick={() => setShowAdd(true)}
-              className="w-full py-2.5 rounded-xl border-2 border-dashed border-pink-200 text-sm text-pink-400 font-medium active:bg-pink-50"
+              className="w-full py-1.5 rounded-xl border-2 border-dashed border-pink-200 text-sm text-pink-400 font-medium active:bg-pink-50"
             >
               ＋ 会員を追加
             </button>
-
-            {/* 会員テーブル */}
-            {members.length === 0 ? (
-              <p className="text-center text-sm text-gray-400 py-8">会員データがありません</p>
-            ) : (
-              <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm min-w-[560px]">
-                    <thead>
-                      <tr className="bg-gray-50 border-b border-gray-100">
-                        <th className="text-left px-3 py-2.5 text-xs font-medium text-gray-500 whitespace-nowrap">会員NO</th>
-                        <th className="text-left px-3 py-2.5 text-xs font-medium text-gray-500">氏名</th>
-                        <th className="text-left px-3 py-2.5 text-xs font-medium text-gray-500 whitespace-nowrap">最終振込日</th>
-                        <th className="text-left px-3 py-2.5 text-xs font-medium text-gray-500 whitespace-nowrap">次回振込日</th>
-                        <th className="text-left px-3 py-2.5 text-xs font-medium text-gray-500">状態</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {members
-                        .filter((m) => {
-                          // テキスト検索
-                          if (memberSearch) {
-                            const q = memberSearch.toLowerCase();
-                            const matchText =
-                              m.memberNumber.toLowerCase().includes(q) ||
-                              m.name.toLowerCase().includes(q) ||
-                              (m.furigana ?? "").toLowerCase().includes(q);
-                            if (!matchText) return false;
-                          }
-                          // 絞り込みボタン
-                          if (memberFilter === "active") return memberStatus(m) !== "inactive";
-                          if (memberFilter === "inactive") return memberStatus(m) === "inactive";
-                          if (memberFilter === "thisMonth") {
-                            if (!m.isActive || !m.nextPaymentDate) return false;
-                            const ym = new Date().toISOString().slice(0, 7);
-                            return m.nextPaymentDate.startsWith(ym);
-                          }
-                          return true;
-                        })
-                        .map((m) => (
-                          <tr
-                            key={m.memberNumber}
-                            onClick={() => openEdit(m)}
-                            className="border-b border-gray-50 last:border-0 hover:bg-pink-50 active:bg-pink-50 cursor-pointer"
-                          >
-                            <td className="px-3 py-2.5 text-xs text-gray-500 whitespace-nowrap">{m.memberNumber}</td>
-                            <td className="px-3 py-2.5 font-medium text-pink-600 whitespace-nowrap">{m.name}</td>
-                            <td className="px-3 py-2.5 text-xs text-gray-700 whitespace-nowrap">{fmtDate(m.lastPaymentDate)}</td>
-                            <td className="px-3 py-2.5 text-xs text-gray-700 whitespace-nowrap">{fmtDate(m.nextPaymentDate)}</td>
-                            <td className="px-3 py-2.5 whitespace-nowrap">
-                              {(() => {
-                                const s = memberStatus(m);
-                                return (
-                                  <span
-                                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                                      s === "active"
-                                        ? "bg-green-100 text-green-700"
-                                        : s === "thisMonth"
-                                        ? "bg-yellow-100 text-yellow-700"
-                                        : "bg-gray-100 text-gray-500"
-                                    }`}
-                                  >
-                                    {s === "active" ? "有効" : s === "thisMonth" ? "今月期限" : "無効"}
-                                  </span>
-                                );
-                              })()}
-                            </td>
-                          </tr>
-                        ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
           </div>
-        )}
 
-        {/* ====== データ管理タブ ====== */}
-        {tab === "backup" && (
+          {/* テーブル（ここだけスクロール、ヘッダー固定） */}
+          {members.length === 0 ? (
+            <p className="text-center text-sm text-gray-400 py-8">会員データがありません</p>
+          ) : (
+            <div className="flex-1 min-h-0 overflow-auto mx-3 mb-3 bg-white rounded-xl border border-gray-100">
+              <table className="w-full text-sm min-w-[560px]">
+                <thead className="sticky top-0 z-10 bg-gray-50">
+                  <tr className="border-b border-gray-100">
+                    <th className="text-left px-3 py-2 text-xs font-medium text-gray-500 whitespace-nowrap">会員NO</th>
+                    <th className="text-left px-3 py-2 text-xs font-medium text-gray-500">氏名</th>
+                    <th className="text-left px-3 py-2 text-xs font-medium text-gray-500 whitespace-nowrap">最終振込日</th>
+                    <th className="text-left px-3 py-2 text-xs font-medium text-gray-500 whitespace-nowrap">次回振込日</th>
+                    <th className="text-left px-3 py-2 text-xs font-medium text-gray-500">状態</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {members
+                    .filter((m) => {
+                      if (memberSearch) {
+                        const q = memberSearch.toLowerCase();
+                        const matchText =
+                          m.memberNumber.toLowerCase().includes(q) ||
+                          m.name.toLowerCase().includes(q) ||
+                          (m.furigana ?? "").toLowerCase().includes(q);
+                        if (!matchText) return false;
+                      }
+                      if (memberFilter === "active") return memberStatus(m) !== "inactive";
+                      if (memberFilter === "inactive") return memberStatus(m) === "inactive";
+                      if (memberFilter === "thisMonth") {
+                        if (!m.isActive || !m.nextPaymentDate) return false;
+                        const ym = new Date().toISOString().slice(0, 7);
+                        return m.nextPaymentDate.startsWith(ym);
+                      }
+                      return true;
+                    })
+                    .map((m) => (
+                      <tr
+                        key={m.memberNumber}
+                        onClick={() => openEdit(m)}
+                        className="border-b border-gray-50 last:border-0 hover:bg-pink-50 active:bg-pink-50 cursor-pointer"
+                      >
+                        <td className="px-3 py-2 text-xs text-gray-500 whitespace-nowrap">{m.memberNumber}</td>
+                        <td className="px-3 py-2 font-medium text-pink-600 whitespace-nowrap">{m.name}</td>
+                        <td className="px-3 py-2 text-xs text-gray-700 whitespace-nowrap">{fmtDate(m.lastPaymentDate)}</td>
+                        <td className="px-3 py-2 text-xs text-gray-700 whitespace-nowrap">{fmtDate(m.nextPaymentDate)}</td>
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          {(() => {
+                            const s = memberStatus(m);
+                            return (
+                              <span
+                                className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                  s === "active"
+                                    ? "bg-green-100 text-green-700"
+                                    : s === "thisMonth"
+                                    ? "bg-yellow-100 text-yellow-700"
+                                    : "bg-gray-100 text-gray-500"
+                                }`}
+                              >
+                                {s === "active" ? "有効" : s === "thisMonth" ? "今月期限" : "無効"}
+                              </span>
+                            );
+                          })()}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ====== データ管理タブ ====== */}
+      {tab === "backup" && (
+        <div className="flex-1 overflow-y-auto p-4">
           <div className="space-y-4">
             <div className="bg-white rounded-xl border border-gray-100 p-4 space-y-3">
               <h2 className="text-sm font-bold">バックアップ</h2>
@@ -674,8 +673,8 @@ export default function AdminPage() {
               )}
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* ====== 会員編集モーダル（名前タップで開く） ====== */}
       {editMember && (
