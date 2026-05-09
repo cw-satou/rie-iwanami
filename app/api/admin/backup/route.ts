@@ -48,17 +48,22 @@ export async function POST(req: NextRequest) {
   const label: string | undefined = body.label;
   const download: boolean = body.download ?? false;
 
-  // KVとローカルにバックアップ保存
-  const entry = await createBackup(label);
+  // バックアップ保存（失敗してもダウンロードは続行）
+  let entry = null;
+  try {
+    entry = await createBackup(label);
+  } catch (err) {
+    console.error("バックアップ保存エラー（ダウンロードは続行）:", err);
+  }
 
   if (download) {
-    // 現在の会員データをダウンロード用に返す
     const members = await getMembers();
-    const timestamp = entry.timestamp.replace(/[:.]/g, "-");
+    const now = new Date().toISOString();
+    const timestamp = now.replace(/[:.]/g, "-");
     const filename = `members-${timestamp}.json`;
     const payload = {
-      exportedAt: entry.timestamp,
-      backupId: entry.id,
+      exportedAt: now,
+      backupId: entry?.id ?? null,
       members,
     };
     return new NextResponse(JSON.stringify(payload, null, 2), {
@@ -67,6 +72,10 @@ export async function POST(req: NextRequest) {
         "Content-Disposition": `attachment; filename="${filename}"`,
       },
     });
+  }
+
+  if (!entry) {
+    return NextResponse.json({ error: "バックアップ保存に失敗しました" }, { status: 500 });
   }
 
   return NextResponse.json(entry);
