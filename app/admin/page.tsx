@@ -64,6 +64,7 @@ export default function AdminPage() {
   const [backups, setBackups] = useState<BackupEntry[]>([]);
   const [tab, setTab] = useState<"members" | "backup">("members");
   const [memberSearch, setMemberSearch] = useState("");
+  const [memberFilter, setMemberFilter] = useState<"all" | "active" | "inactive" | "thisMonth">("all");
 
   // 会員編集モーダル
   const [editMember, setEditMember] = useState<Member | null>(null);
@@ -443,6 +444,30 @@ export default function AdminPage() {
               className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-pink-400"
             />
 
+            {/* 絞り込みボタン */}
+            <div className="flex gap-2">
+              {(
+                [
+                  { key: "all",       label: "すべて" },
+                  { key: "active",    label: "有効" },
+                  { key: "inactive",  label: "無効" },
+                  { key: "thisMonth", label: "今月更新" },
+                ] as const
+              ).map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setMemberFilter(key)}
+                  className={`flex-1 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                    memberFilter === key
+                      ? "bg-pink-400 text-white border-pink-400"
+                      : "bg-white text-gray-500 border-gray-200 active:bg-gray-50"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
             {/* 会員追加ボタン */}
             <button
               onClick={() => setShowAdd(true)}
@@ -470,13 +495,24 @@ export default function AdminPage() {
                     <tbody>
                       {members
                         .filter((m) => {
-                          if (!memberSearch) return true;
-                          const q = memberSearch.toLowerCase();
-                          return (
-                            m.memberNumber.toLowerCase().includes(q) ||
-                            m.name.toLowerCase().includes(q) ||
-                            (m.furigana ?? "").toLowerCase().includes(q)
-                          );
+                          // テキスト検索
+                          if (memberSearch) {
+                            const q = memberSearch.toLowerCase();
+                            const matchText =
+                              m.memberNumber.toLowerCase().includes(q) ||
+                              m.name.toLowerCase().includes(q) ||
+                              (m.furigana ?? "").toLowerCase().includes(q);
+                            if (!matchText) return false;
+                          }
+                          // 絞り込みボタン
+                          if (memberFilter === "active") return m.isActive;
+                          if (memberFilter === "inactive") return !m.isActive;
+                          if (memberFilter === "thisMonth") {
+                            if (!m.isActive || !m.nextPaymentDate) return false;
+                            const ym = new Date().toISOString().slice(0, 7);
+                            return m.nextPaymentDate.startsWith(ym);
+                          }
+                          return true;
                         })
                         .map((m) => (
                           <tr
