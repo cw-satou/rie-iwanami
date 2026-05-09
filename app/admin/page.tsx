@@ -182,9 +182,9 @@ export default function AdminPage() {
   }
 
   // ---- 一覧からのクイック振込確認（今日付け） ----
-  async function handleQuickConfirm(e: React.MouseEvent, memberNumber: string) {
+  async function handleQuickConfirm(e: React.MouseEvent, memberNumber: string, name: string) {
     e.stopPropagation();
-    if (!confirm(`${memberNumber} の振込を今日（${today()}）で確認しますか？`)) return;
+    if (!confirm(`会員No:${memberNumber} ${name}さんの振込を今日（${today()}）で確認しますか？`)) return;
     setQuickConfirming(memberNumber);
     const res = await fetch("/api/admin/transfer-confirm", {
       method: "POST",
@@ -582,7 +582,7 @@ export default function AdminPage() {
                         </td>
                         <td className="px-2 py-1.5 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                           <button
-                            onClick={(e) => handleQuickConfirm(e, m.memberNumber)}
+                            onClick={(e) => handleQuickConfirm(e, m.memberNumber, m.name)}
                             disabled={quickConfirming === m.memberNumber}
                             className="text-xs px-2 py-1 bg-blue-500 text-white rounded-lg disabled:opacity-50 active:bg-blue-600 whitespace-nowrap"
                           >
