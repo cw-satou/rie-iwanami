@@ -72,15 +72,18 @@ export default function InstallPrompt() {
 
   return (
     <>
-      <button
-        onClick={handleInstall}
-        className="w-full flex items-center justify-center gap-2 bg-pink-500 text-white text-sm font-semibold py-3 px-4 rounded-2xl active:bg-pink-600 transition-colors shadow-sm"
-      >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v12m0 0l-4-4m4 4l4-4" />
-        </svg>
-        アプリをインストール
-      </button>
+      {/* 画面下部に固定表示 */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 p-3 bg-white/90 backdrop-blur-sm border-t border-gray-100 safe-area-inset-bottom">
+        <button
+          onClick={handleInstall}
+          className="w-full flex items-center justify-center gap-2 bg-pink-500 text-white text-sm font-semibold py-3 px-4 rounded-2xl active:bg-pink-600 transition-colors shadow-sm"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 4v12m0 0l-4-4m4 4l4-4" />
+          </svg>
+          アプリをインストール
+        </button>
+      </div>
 
       {/* iOS guide modal */}
       {showIosGuide && (
