@@ -16,6 +16,7 @@ export default async function ReiwaChannelPage() {
       <PageHeader title="Youtube" icon="▶️" />
 
       {/* Regular videos */}
+      {videos.length > 0 && (
       <div className="p-4 space-y-4">
         {videos.map((video) => (
           <a
@@ -51,6 +52,12 @@ export default async function ReiwaChannelPage() {
           </a>
         ))}
       </div>
+      )}
+
+      {/* コンテンツなし */}
+      {videos.length === 0 && shorts.length === 0 && (
+        <p className="text-sm text-gray-400 text-center py-12">動画を取得中...</p>
+      )}
 
       {/* Shorts section */}
       {shorts.length > 0 && (
