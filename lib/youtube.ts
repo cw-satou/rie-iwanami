@@ -52,9 +52,9 @@ export async function fetchYouTubeVideos(): Promise<YouTubeVideo[]> {
     if (!res.ok) return [];
 
     const data = await res.json();
-    const videos: YouTubeVideo[] = (data.items ?? []).map(
-      (item: Parameters<typeof mapItem>[0]) => mapItem(item, true)
-    );
+    const videos: YouTubeVideo[] = (data.items ?? [])
+      .map((item: Parameters<typeof mapItem>[0]) => mapItem(item, true))
+      .filter((v: YouTubeVideo) => v.title.includes("岩波") && v.title.includes("理恵"));
     return sortByDate(videos);
   } catch (error) {
     console.error("YouTube MV fetch failed:", error);
