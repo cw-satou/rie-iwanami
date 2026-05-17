@@ -36,8 +36,7 @@ async function resolveChannelId(handle: string, apiKey: string): Promise<string 
   }
 }
 
-// ---- ミュージックビデオ: @tokuma_enka チャンネル ----
-// タイトルに「岩波」かつ「理恵」を含み、「徳間ジャパン 演歌・歌謡曲チャンネル」の動画のみ
+// ---- ミュージックビデオ: @tokuma_enka チャンネル内を「岩波理恵」で検索 ----
 export async function fetchYouTubeVideos(): Promise<YouTubeVideo[]> {
   const apiKey = process.env.YOUTUBE_API_KEY;
   if (!apiKey) return [];
@@ -47,20 +46,15 @@ export async function fetchYouTubeVideos(): Promise<YouTubeVideo[]> {
     if (!channelId) return [];
 
     const res = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&maxResults=50&order=date&key=${apiKey}`,
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&q=${encodeURIComponent("岩波理恵")}&type=video&maxResults=50&order=relevance&key=${apiKey}`,
       { next: { revalidate: 3600 } }
     );
     if (!res.ok) return [];
 
     const data = await res.json();
-    const videos: YouTubeVideo[] = (data.items ?? [])
-      .map((item: Parameters<typeof mapItem>[0]) => mapItem(item, true))
-      .filter((v: YouTubeVideo) =>
-        v.title.includes("岩波") &&
-        v.title.includes("理恵") &&
-        v.channelTitle?.includes("徳間ジャパン") &&
-        v.channelTitle?.includes("演歌")
-      );
+    const videos: YouTubeVideo[] = (data.items ?? []).map(
+      (item: Parameters<typeof mapItem>[0]) => mapItem(item, true)
+    );
     return sortByDate(videos);
   } catch (error) {
     console.error("YouTube MV fetch failed:", error);
