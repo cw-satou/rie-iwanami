@@ -10,7 +10,7 @@ export default async function YoutubePage() {
 
   return (
     <div className="pb-6 page-enter">
-      <PageHeader title="Youtube" icon="▶️" />
+      <PageHeader title="ミュージックビデオ" icon="🎬" />
 
       <div className="p-4 space-y-4">
         {videos.map((video) => (
@@ -62,11 +62,11 @@ export default async function YoutubePage() {
 
       <div className="text-center py-4">
         <ExternalLink
-          href="https://www.youtube.com/@channel-gq1tx"
-          title="YouTubeチャンネル"
+          href="https://www.youtube.com/@tokuma_enka/videos"
+          title="徳間ジャパンチャンネル"
           className="text-sm text-pink-500 font-medium"
         >
-          YouTubeチャンネルを見る →
+          徳間ジャパン公式チャンネルを見る →
         </ExternalLink>
       </div>
 

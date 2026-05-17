@@ -14,7 +14,7 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
   { href: "/news", label: "ニュース・イベント", icon: "📰" },
   { href: "/blog", label: "個人ブログ", icon: "📝" },
-  { href: "/youtube", label: "歌唱動画", icon: "🎤" },
+  { href: "/youtube", label: "ミュージックビデオ", icon: "🎬" },
   { href: "/reiwa-channel", label: "Youtube", icon: "▶️" },
   { href: "/live", label: "ライブ配信", icon: "📡" },
   { href: "/agency", label: "事務所情報", icon: "🏢" },

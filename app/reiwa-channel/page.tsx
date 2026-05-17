@@ -102,11 +102,11 @@ export default async function ReiwaChannelPage() {
 
       <div className="text-center py-4 mt-2">
         <ExternalLink
-          href="https://www.youtube.com/@rie_iwanami"
-          title="令和歌謡チャンネル"
+          href="https://www.youtube.com/@channel-gq1tx"
+          title="YouTubeチャンネル"
           className="text-sm text-pink-500 font-medium"
         >
-          チャンネルをYouTubeで見る →
+          YouTubeチャンネルを見る →
         </ExternalLink>
       </div>
     </div>
