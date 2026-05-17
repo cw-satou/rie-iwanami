@@ -53,6 +53,13 @@ export async function fetchYouTubeVideos(): Promise<YouTubeVideo[]> {
 
     const data = await res.json();
     const videos: YouTubeVideo[] = (data.items ?? [])
+      // #shorts タグ（タイトル・説明欄）を含む動画を除外
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .filter((item: any) => {
+        const title = (item.snippet.title ?? "").toLowerCase();
+        const desc = (item.snippet.description ?? "").toLowerCase();
+        return !title.includes("#shorts") && !desc.includes("#shorts");
+      })
       .map((item: Parameters<typeof mapItem>[0]) => mapItem(item, true))
       .filter((v: YouTubeVideo) => v.title.includes("岩波") && v.title.includes("理恵"));
     return sortByDate(videos);
