@@ -36,6 +36,9 @@ async function resolveChannelId(handle: string, apiKey: string): Promise<string 
   }
 }
 
+// ミュージックビデオ除外リスト
+const MV_EXCLUDED_IDS = new Set(["6Qs7251ezBM", "iex_SW_cVvU"]);
+
 // ---- ミュージックビデオ: @tokuma_enka チャンネル内を「岩波理恵」で検索 ----
 export async function fetchYouTubeVideos(): Promise<YouTubeVideo[]> {
   const apiKey = process.env.YOUTUBE_API_KEY;
@@ -61,7 +64,11 @@ export async function fetchYouTubeVideos(): Promise<YouTubeVideo[]> {
         return !title.includes("#shorts") && !desc.includes("#shorts");
       })
       .map((item: Parameters<typeof mapItem>[0]) => mapItem(item, true))
-      .filter((v: YouTubeVideo) => v.title.includes("岩波") && v.title.includes("理恵"));
+      .filter((v: YouTubeVideo) =>
+        v.title.includes("岩波") &&
+        v.title.includes("理恵") &&
+        !MV_EXCLUDED_IDS.has(v.id)
+      );
     return sortByDate(videos);
   } catch (error) {
     console.error("YouTube MV fetch failed:", error);
