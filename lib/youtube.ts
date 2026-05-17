@@ -58,7 +58,8 @@ export async function fetchYouTubeVideos(): Promise<YouTubeVideo[]> {
       .filter((v: YouTubeVideo) =>
         v.title.includes("岩波") &&
         v.title.includes("理恵") &&
-        v.channelTitle === "徳間ジャパン 演歌・歌謡曲チャンネル"
+        v.channelTitle?.includes("徳間ジャパン") &&
+        v.channelTitle?.includes("演歌")
       );
     return sortByDate(videos);
   } catch (error) {
@@ -76,9 +77,8 @@ export async function fetchReiwaChannelVideos(): Promise<YouTubeVideo[]> {
     const channelId = await resolveChannelId("channel-gq1tx", apiKey);
     if (!channelId) return [];
 
-    // videoDuration=medium または long でショートを除外
     const res = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&videoDuration=medium&maxResults=20&order=date&key=${apiKey}`,
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&maxResults=20&order=date&key=${apiKey}`,
       { next: { revalidate: 3600 } }
     );
     if (!res.ok) return [];
