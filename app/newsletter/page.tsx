@@ -647,6 +647,11 @@ export default function NewsletterPage() {
             </div>
           )}
 
+          {/* 転載禁止注意書き */}
+          <p className="text-xs text-gray-500 bg-pink-50 rounded-xl px-4 py-3 border border-pink-100/60 leading-relaxed">
+            会報および会員様限定特典（デジタル・郵送物を含む）のSNS等への転載・公開は禁止とさせていただきます。
+          </p>
+
           {/* Login CTA */}
           <div className="bg-white rounded-2xl p-5 text-center border border-pink-100/50">
             <p className="text-2xl mb-2">📖</p>
