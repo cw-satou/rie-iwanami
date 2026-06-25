@@ -57,6 +57,7 @@ export default function NewsletterPage() {
     startY: number;
     isPinching: boolean;
     isDragging: boolean;
+    didDrag: boolean;
   }>({
     lastDist: 0,
     lastX: 0,
@@ -66,6 +67,7 @@ export default function NewsletterPage() {
     startY: 0,
     isPinching: false,
     isDragging: false,
+    didDrag: false,
   });
 
   const openZoom = useCallback(() => {
@@ -90,13 +92,15 @@ export default function NewsletterPage() {
         touchRef.current.startScale = zoomScale;
         touchRef.current.isPinching = true;
         touchRef.current.isDragging = false;
-      } else if (e.touches.length === 1 && zoomScale > 1) {
+      } else if (e.touches.length === 1) {
+        // 等倍（縦100%・横はみ出し）でも横方向に動かせるようドラッグを許可
         touchRef.current.lastX = e.touches[0].clientX;
         touchRef.current.lastY = e.touches[0].clientY;
         touchRef.current.startX = zoomPos.x;
         touchRef.current.startY = zoomPos.y;
         touchRef.current.isDragging = true;
         touchRef.current.isPinching = false;
+        touchRef.current.didDrag = false;
       }
     },
     [zoomScale, zoomPos]
@@ -112,12 +116,15 @@ export default function NewsletterPage() {
         const ratio = dist / touchRef.current.lastDist;
         const newScale = Math.max(1, Math.min(5, touchRef.current.startScale * ratio));
         setZoomScale(newScale);
-      } else if (touchRef.current.isDragging && e.touches.length === 1 && zoomScale > 1) {
+      } else if (touchRef.current.isDragging && e.touches.length === 1) {
         const dx = e.touches[0].clientX - touchRef.current.lastX;
         const dy = e.touches[0].clientY - touchRef.current.lastY;
+        if (Math.abs(dx) > 4 || Math.abs(dy) > 4) touchRef.current.didDrag = true;
+        // 等倍は縦100%固定なので横だけ動かす。拡大後は縦横ともに動かす
+        const allowY = zoomScale > 1.05;
         setZoomPos({
           x: touchRef.current.startX + dx,
-          y: touchRef.current.startY + dy,
+          y: allowY ? touchRef.current.startY + dy : 0,
         });
       }
     },
@@ -129,7 +136,8 @@ export default function NewsletterPage() {
     touchRef.current.isDragging = false;
     if (zoomScale <= 1.05) {
       setZoomScale(1);
-      setZoomPos({ x: 0, y: 0 });
+      // 等倍に戻すときは縦だけ中央へ。横位置（パン）は保持する
+      setZoomPos((p) => ({ x: p.x, y: 0 }));
     }
   }, [zoomScale]);
 
@@ -454,7 +462,11 @@ export default function NewsletterPage() {
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
-              onClick={() => { if (zoomScale <= 1.05) handleTap(); }}
+              onClick={() => {
+                // ドラッグ操作の直後はタップ扱いしない
+                if (touchRef.current.didDrag) { touchRef.current.didDrag = false; return; }
+                if (zoomScale <= 1.05) handleTap();
+              }}
             >
               <div
                 style={{
@@ -469,7 +481,8 @@ export default function NewsletterPage() {
                   alt={`${selectedNl.title} ${currentPage + 1}ページ`}
                   width={1200}
                   height={850}
-                  className="w-full h-auto max-h-[85vh] object-contain"
+                  /* 開いた直後は縦を画面いっぱい（100vh）に。横は画面に収まらずはみ出す */
+                  className="h-screen w-auto max-w-none"
                   priority
                 />
               </div>
