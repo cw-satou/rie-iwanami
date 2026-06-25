@@ -84,6 +84,17 @@ export default async function HomePage() {
     });
   }
 
+  // 会報の新着情報（手動管理）
+  feed.push({
+    type: "news",
+    date: "2026/06/25",
+    sortDate: parseDate("2026/06/25"),
+    title: "第20号を掲載しました！",
+    icon: "📖",
+    label: "ファンクラブ会報",
+    url: "/newsletter",
+  });
+
   // Sort by date descending, take top 8
   feed.sort((a, b) => b.sortDate - a.sortDate);
   const latestFeed = feed.slice(0, 8);
@@ -137,11 +148,14 @@ export default async function HomePage() {
               </span>
             </Link>
           ))}
-          {/* Last item: full width */}
+          {/* Last item: full width (ファンクラブ会報) */}
           <Link
             href={menuItems[menuItems.length - 1].href}
-            className="col-span-2 bg-white rounded-2xl p-4 flex flex-col items-center gap-1.5 card-hover border border-pink-100/50 active:bg-pink-50"
+            className="col-span-2 bg-white rounded-2xl p-4 flex flex-col items-center gap-1.5 card-hover border border-pink-100/50 active:bg-pink-50 relative"
           >
+            <span className="absolute top-2 right-3 bg-pink-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full animate-bounce">
+              第20号 公開！
+            </span>
             <span className="text-2xl">{menuItems[menuItems.length - 1].icon}</span>
             <span className="text-xs font-semibold text-gray-700 text-center leading-tight">
               {menuItems[menuItems.length - 1].label}
@@ -258,6 +272,7 @@ function FeedCard({ item }: { item: FeedItem }) {
     ニュース: "bg-blue-50 text-blue-600",
     イベント: "bg-red-50 text-red-600",
     ブログ: "bg-green-50 text-green-600",
+    ファンクラブ会報: "bg-pink-50 text-pink-600",
   };
 
   const content = (
@@ -284,6 +299,9 @@ function FeedCard({ item }: { item: FeedItem }) {
   );
 
   if (item.url) {
+    if (item.url.startsWith("/")) {
+      return <Link href={item.url}>{content}</Link>;
+    }
     return (
       <a href={item.url} target="_blank" rel="noopener noreferrer">
         {content}
