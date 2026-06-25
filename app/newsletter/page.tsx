@@ -141,6 +141,40 @@ export default function NewsletterPage() {
     }
   }, [zoomScale]);
 
+  // ── PC: マウスのドラッグ＆ドロップで移動（スワイプの代替） ──
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      touchRef.current.lastX = e.clientX;
+      touchRef.current.lastY = e.clientY;
+      touchRef.current.startX = zoomPos.x;
+      touchRef.current.startY = zoomPos.y;
+      touchRef.current.isDragging = true;
+      touchRef.current.didDrag = false;
+    },
+    [zoomPos]
+  );
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (!touchRef.current.isDragging) return;
+      const dx = e.clientX - touchRef.current.lastX;
+      const dy = e.clientY - touchRef.current.lastY;
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) touchRef.current.didDrag = true;
+      // 等倍時は横のみ、拡大時は縦横とも移動
+      const allowY = zoomScale > 1.05;
+      setZoomPos({
+        x: touchRef.current.startX + dx,
+        y: allowY ? touchRef.current.startY + dy : 0,
+      });
+    },
+    [zoomScale]
+  );
+
+  const handleMouseUp = useCallback(() => {
+    touchRef.current.isDragging = false;
+  }, []);
+
   const doubleTapRef = useRef<number>(0);
   const handleDoubleTap = useCallback(() => {
     if (zoomScale > 1) {
@@ -458,12 +492,18 @@ export default function NewsletterPage() {
             )}
             <div
               ref={zoomRef}
-              className="w-full h-full flex items-center justify-center overflow-hidden"
+              /* pt-[72px]: 上部バー（閉じる・改ページ）にかぶらないよう表示領域を下げる
+                 cursor-grab: PCではマウスでドラッグ＆ドロップ移動できることを示す */
+              className="w-full h-full flex items-center justify-center overflow-hidden pt-[72px] cursor-grab active:cursor-grabbing"
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
               onClick={() => {
-                // ドラッグ操作の直後はタップ扱いしない
+                // ドラッグ操作の直後はタップ/クリック扱いしない
                 if (touchRef.current.didDrag) { touchRef.current.didDrag = false; return; }
                 if (zoomScale <= 1.05) handleTap();
               }}
@@ -481,8 +521,13 @@ export default function NewsletterPage() {
                   alt={`${selectedNl.title} ${currentPage + 1}ページ`}
                   width={1200}
                   height={850}
-                  /* 開いた直後は縦を画面いっぱい（100vh）に。横は画面に収まらずはみ出す */
-                  className="h-screen w-auto max-w-none"
+                  /* 画面の高さに合わせて縦を拡大（横ははみ出す）。ただし上部バー(約64px)に
+                     かぶらないよう、表示領域を72px分差し引いた高さにする。縦の拡大も
+                     この高さが基準になる。
+                     next/imageとTailwind基準スタイルの兼ね合いでクラス指定の高さが
+                     効かない場合があるため、インラインstyleで確実に固定する */
+                  className="max-w-none"
+                  style={{ height: "calc(100dvh - 72px)", width: "auto" }}
                   priority
                 />
               </div>
