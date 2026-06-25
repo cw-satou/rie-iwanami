@@ -607,7 +607,7 @@ export default function NewsletterPage() {
                     src={nl.coverImage}
                     alt={nl.title}
                     fill
-                    className="object-cover"
+                    className="object-cover object-right"
                   />
                   <div className="absolute top-2 right-2 bg-black/50 text-white text-[10px] px-2 py-0.5 rounded-full backdrop-blur-sm">
                     {nl.pages?.length || nl.totalPages || 0}P
@@ -644,7 +644,7 @@ export default function NewsletterPage() {
                       src={nl.coverImage}
                       alt={nl.title}
                       fill
-                      className="object-cover"
+                      className="object-cover object-right"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-white/95 via-white/30 to-transparent flex flex-col items-center justify-end pb-3">
                       <span className="text-lg">🔒</span>
