@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import AdminNewslettersUI from "@/components/AdminNewslettersUI";
 
 // ---- 型定義 ----
 
@@ -28,6 +29,16 @@ interface BackupEntry {
   timestamp: string;
   memberCount: number;
   label?: string;
+}
+
+interface Newsletter {
+  id: string;
+  vol: string;
+  issue: string;
+  title: string;
+  gradient: string;
+  coverImage: string;
+  pages: string[];
 }
 
 // ---- ユーティリティ ----
@@ -75,7 +86,9 @@ export default function AdminPage() {
 
   const [members, setMembers] = useState<Member[]>([]);
   const [backups, setBackups] = useState<BackupEntry[]>([]);
-  const [tab, setTab] = useState<"members" | "backup">("members");
+  const [newsletters, setNewsletters] = useState<Newsletter[]>([]);
+  const [newslettersLoaded, setNewslettersLoaded] = useState(false);
+  const [tab, setTab] = useState<"members" | "newsletters" | "backup">("members");
   const [memberSearch, setMemberSearch] = useState("");
   const [memberFilter, setMemberFilter] = useState<"all" | "active" | "inactive" | "thisMonth">("all");
 
@@ -161,12 +174,18 @@ export default function AdminPage() {
 
   // ---- データ読み込み ----
   async function loadAll() {
-    const [mRes, bRes] = await Promise.all([
+    const [mRes, bRes, nRes] = await Promise.all([
       fetch("/api/admin/members"),
       fetch("/api/admin/backup"),
+      fetch("/api/admin/newsletters"),
     ]);
     if (mRes.ok) setMembers(await mRes.json());
     if (bRes.ok) setBackups(await bRes.json());
+    if (nRes.ok) {
+      const data = await nRes.json();
+      setNewsletters(data.newsletters ?? []);
+      setNewslettersLoaded(true);
+    }
   }
 
   // ---- 会員編集モーダルを開く ----
@@ -439,15 +458,16 @@ export default function AdminPage() {
 
       {/* タブ */}
       <div className="flex border-b border-gray-200 bg-white flex-shrink-0">
-        {(["members", "backup"] as const).map((t) => (
+        {(["members", "newsletters", "backup"] as const).map((t) => (
           <button
             key={t}
+            type="button"
             onClick={() => setTab(t)}
             className={`flex-1 py-2 text-sm font-medium transition-colors ${
               tab === t ? "text-pink-500 border-b-2 border-pink-500" : "text-gray-500"
             }`}
           >
-            {t === "members" ? "会員管理" : "データ管理"}
+            {t === "members" ? "会員管理" : t === "newsletters" ? "会報管理" : "データ管理"}
           </button>
         ))}
       </div>
@@ -596,6 +616,20 @@ export default function AdminPage() {
             </div>
           )}
         </>
+      )}
+
+      {/* ====== 会報管理タブ ====== */}
+      {tab === "newsletters" && (
+        <div className="flex-1 overflow-y-auto p-4">
+          {newslettersLoaded ? (
+            <AdminNewslettersUI
+              key={`nl-${newsletters.length}`}
+              initialNewsletters={newsletters}
+            />
+          ) : (
+            <p className="text-center text-sm text-gray-400 py-8">読み込み中...</p>
+          )}
+        </div>
       )}
 
       {/* ====== データ管理タブ ====== */}
