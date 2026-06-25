@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback, useId, FormEvent } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import Image from "next/image";
 import PageHeader from "@/components/PageHeader";
@@ -431,8 +432,10 @@ export default function NewsletterPage() {
           </p>
         </div>
 
-        {/* Zoom Modal — unchanged from original */}
-        {zoomOpen && (
+        {/* Zoom Modal — Portalでbody直下に描画する。
+            親の.page-enterがtransformを持つため、ここに置かないと
+            fixed inset-0 が画面全体ではなくページ要素基準になってしまう */}
+        {zoomOpen && createPortal(
           <div
             role="dialog"
             aria-modal="true"
@@ -532,7 +535,8 @@ export default function NewsletterPage() {
                 />
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     );
