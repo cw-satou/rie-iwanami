@@ -524,6 +524,9 @@ export default function NewsletterPage() {
                   alt={`${selectedNl.title} ${currentPage + 1}ページ`}
                   width={1200}
                   height={850}
+                  /* unoptimized: 拡大ビューアではオリジナル解像度のPNGをそのまま配信する。
+                     Next.jsの最適化（縮小・圧縮）を無効にすることで、ピンチ拡大時の画質を保つ */
+                  unoptimized
                   /* 画面の高さに合わせて縦を拡大（横ははみ出す）。ただし上部バー(約64px)に
                      かぶらないよう、表示領域を72px分差し引いた高さにする。縦の拡大も
                      この高さが基準になる。
