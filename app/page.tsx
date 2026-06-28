@@ -200,28 +200,24 @@ export default async function HomePage() {
           <div className="w-1 h-5 bg-red-500 rounded-full" />
           <h2 className="text-base font-bold">歌唱リスト</h2>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           <a
             href="https://www.youtube.com/playlist?list=PLpBoOf_bpB78xoclJMYAKJ4K7exKL657m"
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-white rounded-2xl p-4 flex flex-col items-center gap-2 card-hover border border-pink-100/50 active:bg-pink-50"
+            className="bg-white rounded-xl px-3 py-2 flex items-center gap-2 card-hover border border-pink-100/50 active:bg-pink-50"
           >
-            <span className="text-2xl">🎂</span>
-            <span className="text-xs font-semibold text-gray-700 text-center leading-tight">
-              バースデーライブ
-            </span>
+            <span className="text-base w-5 text-center flex-shrink-0">🎂</span>
+            <span className="text-[0.7rem] font-semibold text-gray-700 leading-tight">バースデーライブ</span>
           </a>
           <a
             href="https://www.youtube.com/playlist?list=PLpBoOf_bpB7-_QWEPDara90qe0Nyck9K7"
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-white rounded-2xl p-4 flex flex-col items-center gap-2 card-hover border border-pink-100/50 active:bg-pink-50"
+            className="bg-white rounded-xl px-3 py-2 flex items-center gap-2 card-hover border border-pink-100/50 active:bg-pink-50"
           >
-            <span className="text-2xl">🎵</span>
-            <span className="text-xs font-semibold text-gray-700 text-center leading-tight">
-              名曲カバー
-            </span>
+            <span className="text-base w-5 text-center flex-shrink-0">🎵</span>
+            <span className="text-[0.7rem] font-semibold text-gray-700 leading-tight">名曲カバー</span>
           </a>
         </div>
       </section>
