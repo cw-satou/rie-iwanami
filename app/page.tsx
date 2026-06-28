@@ -220,6 +220,38 @@ export default async function HomePage() {
         <InstallPrompt />
       </div>
 
+      {/* YouTube Playlist Links */}
+      <section className="px-4 mt-6">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-1 h-5 bg-red-500 rounded-full" />
+          <h2 className="text-base font-bold">歌唱リスト</h2>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <a
+            href="https://www.youtube.com/playlist?list=PLpBoOf_bpB78xoclJMYAKJ4K7exKL657m"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-white rounded-2xl p-4 flex flex-col items-center gap-2 card-hover border border-pink-100/50 active:bg-pink-50"
+          >
+            <span className="text-2xl">🎂</span>
+            <span className="text-xs font-semibold text-gray-700 text-center leading-tight">
+              バースデーライブ
+            </span>
+          </a>
+          <a
+            href="https://www.youtube.com/playlist?list=PLpBoOf_bpB7-_QWEPDara90qe0Nyck9K7"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-white rounded-2xl p-4 flex flex-col items-center gap-2 card-hover border border-pink-100/50 active:bg-pink-50"
+          >
+            <span className="text-2xl">🎵</span>
+            <span className="text-xs font-semibold text-gray-700 text-center leading-tight">
+              名曲カバー
+            </span>
+          </a>
+        </div>
+      </section>
+
       {/* Latest Feed (news + events + blog) */}
       <section className="px-4 mt-6">
         <div className="flex items-center gap-2 mb-3">
