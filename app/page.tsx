@@ -130,6 +130,12 @@ export default async function HomePage() {
               <h1 className="text-white text-3xl font-bold tracking-wide drop-shadow-lg">
                 岩波理恵
               </h1>
+              <Link
+                href="/about"
+                className="inline-block mt-1.5 text-white/80 text-[0.65rem] tracking-wide border-b border-white/40 hover:text-white hover:border-white transition-colors"
+              >
+                プロフィールを読む →
+              </Link>
             </div>
             {/* SNS Links */}
             <div className="flex items-center gap-3 pb-1">
