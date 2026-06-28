@@ -19,19 +19,19 @@ const LINK_CATEGORIES = [
   {
     title: "所属・公式プロフィール",
     links: [
-      { label: "岩波理恵 アーティストページ（徳間ジャパン公式）", url: "https://www.tkma.co.jp/enka_top/iwanami.html" },
-      { label: "岩波理恵 プロフィール（徳間ジャパン）", url: "https://www.tkma.co.jp/enka_profile/iwanami.html" },
-      { label: "岩波理恵 所属事務所ページ（トップ・カラー）", url: "http://www.top-color.jp/?page_id=5742" },
+      { label: "アーティストページ（徳間ジャパン）", url: "https://www.tkma.co.jp/enka_top/iwanami.html" },
+      { label: "プロフィール（徳間ジャパン）", url: "https://www.tkma.co.jp/enka_profile/iwanami.html" },
+      { label: "所属事務所（トップ・カラー）", url: "http://www.top-color.jp/?page_id=5742" },
     ],
   },
   {
     title: "SNS・ライブ配信",
     links: [
-      { label: "岩波理恵 オフィシャルブログ（Ameba）", url: "https://ameblo.jp/rieiwanami/" },
-      { label: "【公式】岩波理恵 Instagram", url: "https://www.instagram.com/rie_iwanami_rie/" },
-      { label: "岩波理恵 X（旧Twitter）", url: "https://x.com/Riecocoamateras" },
-      { label: "岩波理恵 Pococha プロフィール", url: "https://www.pococha.com/en-us/app/users/56941e2a-71c1-4d91-8fc6-0385ba68ebce" },
-      { label: "岩波理恵 Wikipedia", url: "https://ja.wikipedia.org/wiki/岩波理恵" },
+      { label: "オフィシャルブログ（Ameba）", url: "https://ameblo.jp/rieiwanami/" },
+      { label: "Instagram", url: "https://www.instagram.com/rie_iwanami_rie/" },
+      { label: "X（旧Twitter）", url: "https://x.com/Riecocoamateras" },
+      { label: "Pococha", url: "https://www.pococha.com/en-us/app/users/56941e2a-71c1-4d91-8fc6-0385ba68ebce" },
+      { label: "Wikipedia", url: "https://ja.wikipedia.org/wiki/岩波理恵" },
     ],
   },
   {
@@ -39,22 +39,22 @@ const LINK_CATEGORIES = [
     links: [
       { label: "「薔薇の化身」MV【公式】", url: "https://www.youtube.com/watch?v=j7K2oROq304" },
       { label: "BEST ALBUM『未来への坂道』ダイジェスト", url: "https://www.youtube.com/watch?v=xXCqYh20QA8" },
-      { label: "TTCスタジオチャンネル（岩波理恵出演動画）", url: "https://www.youtube.com/@ttc9397/search?query=%E5%B2%A9%E6%B3%A2" },
-      { label: "みんなの歌謡曲（みんかよ）出演動画", url: "https://www.youtube.com/@%E3%81%BF%E3%82%93%E3%81%AA%E3%81%AE%E6%AD%8C%E8%AC%A1%E6%9B%B2%E3%81%BF%E3%82%93%E3%81%8B%E3%82%88/search?query=%E5%B2%A9%E6%B3%A2" },
+      { label: "TTCスタジオチャンネル出演動画", url: "https://www.youtube.com/@ttc9397/search?query=%E5%B2%A9%E6%B3%A2" },
+      { label: "みんかよ出演動画", url: "https://www.youtube.com/@%E3%81%BF%E3%82%93%E3%81%AA%E3%81%AE%E6%AD%8C%E8%AC%A1%E6%9B%B2%E3%81%BF%E3%82%93%E3%81%8B%E3%82%88/search?query=%E5%B2%A9%E6%B3%A2" },
     ],
   },
   {
     title: "音楽配信・カラオケ",
     links: [
-      { label: "岩波理恵 Spotify アーティストページ", url: "https://open.spotify.com/intl-ja/artist/3LIUCBE0wZS6YylvX3iumr" },
-      { label: "岩波理恵 カラオケDAM 検索ページ", url: "https://www.clubdam.com/karaokesearch/artistleaf.html?artistCode=95677" },
+      { label: "Spotify", url: "https://open.spotify.com/intl-ja/artist/3LIUCBE0wZS6YylvX3iumr" },
+      { label: "カラオケDAM", url: "https://www.clubdam.com/karaokesearch/artistleaf.html?artistCode=95677" },
     ],
   },
   {
     title: "メディア・出演関連",
     links: [
-      { label: "みんなの歌謡曲（みんかよ）公式サイト", url: "https://minkayo.amebaownd.com" },
-      { label: "岩波理恵 ORICON NEWS プロフィール", url: "https://www.oricon.co.jp/prof/500324/" },
+      { label: "みんかよ 公式サイト", url: "https://minkayo.amebaownd.com" },
+      { label: "ORICON NEWS", url: "https://www.oricon.co.jp/prof/500324/" },
     ],
   },
 ];
