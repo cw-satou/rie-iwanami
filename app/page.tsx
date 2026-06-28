@@ -228,7 +228,7 @@ export default async function HomePage() {
           <div className="w-1 h-5 bg-pink-500 rounded-full" />
           <h2 className="text-base font-bold">新着情報</h2>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-1.5">
           {latestFeed.length > 0 ? (
             latestFeed.map((item, i) => (
               <FeedCard key={i} item={item} />
@@ -278,22 +278,22 @@ function FeedCard({ item }: { item: FeedItem }) {
   };
 
   const content = (
-    <div className="flex items-start gap-3 p-4 bg-white rounded-2xl card-hover border border-pink-100/50">
-      <div className="w-10 h-10 rounded-xl bg-pink-50 flex items-center justify-center text-xl flex-shrink-0">
+    <div className="flex items-center gap-3 px-3 py-2 bg-white rounded-xl card-hover border border-pink-100/50">
+      <div className="w-8 h-8 rounded-lg bg-pink-50 flex items-center justify-center text-base flex-shrink-0">
         {item.icon}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-xs text-gray-400">{item.date}</span>
+        <div className="flex items-center gap-2 mb-0.5">
+          <span className="text-[0.6rem] text-gray-400">{item.date}</span>
           <span
-            className={`inline-block px-2 py-0.5 rounded-full text-[0.65rem] font-semibold ${
+            className={`inline-block px-1.5 py-px rounded-full text-[0.6rem] font-semibold ${
               labelColors[item.label] || "bg-gray-50 text-gray-600"
             }`}
           >
             {item.label}
           </span>
         </div>
-        <p className="text-sm font-medium leading-snug line-clamp-2">
+        <p className="text-[0.7rem] font-medium leading-snug line-clamp-1">
           {item.title}
         </p>
       </div>
