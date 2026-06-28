@@ -133,35 +133,29 @@ export default async function HomePage() {
         <div className="absolute -bottom-1 left-0 right-0 h-5 bg-pink-50 rounded-t-[50%]" />
       </header>
 
-      {/* Menu Grid - last item always full width */}
-      <div className="px-4 mt-2">
-        <div className="grid grid-cols-2 gap-3">
-          {menuItems.slice(0, -1).map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="bg-white rounded-2xl py-3 px-2 flex flex-col items-center gap-1 card-hover border border-pink-100/50 active:bg-pink-50"
-            >
-              <span className="text-xl">{item.icon}</span>
-              <span className="text-xs font-semibold text-gray-700 text-center leading-tight">
-                {item.label}
-              </span>
-            </Link>
-          ))}
-          {/* Last item: full width (ファンクラブ会報) */}
+      {/* Menu List - 1列アイコン＋テキスト横並び */}
+      <div className="px-4 mt-2 space-y-2">
+        {menuItems.slice(0, -1).map((item) => (
           <Link
-            href={menuItems[menuItems.length - 1].href}
-            className="col-span-2 bg-white rounded-2xl py-3 px-2 flex flex-col items-center gap-1 card-hover border border-pink-100/50 active:bg-pink-50 relative"
+            key={item.href}
+            href={item.href}
+            className="bg-white rounded-2xl px-4 py-2.5 flex items-center gap-3 card-hover border border-pink-100/50 active:bg-pink-50"
           >
-            <span className="absolute top-2 right-3 bg-pink-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full animate-bounce">
-              第20号 公開！
-            </span>
-            <span className="text-xl">{menuItems[menuItems.length - 1].icon}</span>
-            <span className="text-xs font-semibold text-gray-700 text-center leading-tight">
-              {menuItems[menuItems.length - 1].label}
-            </span>
+            <span className="text-xl w-7 text-center flex-shrink-0">{item.icon}</span>
+            <span className="text-sm font-semibold text-gray-700">{item.label}</span>
           </Link>
-        </div>
+        ))}
+        {/* ファンクラブ会報 */}
+        <Link
+          href={menuItems[menuItems.length - 1].href}
+          className="bg-white rounded-2xl px-4 py-2.5 flex items-center gap-3 card-hover border border-pink-100/50 active:bg-pink-50 relative"
+        >
+          <span className="text-xl w-7 text-center flex-shrink-0">{menuItems[menuItems.length - 1].icon}</span>
+          <span className="text-sm font-semibold text-gray-700">{menuItems[menuItems.length - 1].label}</span>
+          <span className="ml-auto bg-pink-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full animate-bounce">
+            第20号 公開！
+          </span>
+        </Link>
       </div>
 
       {/* SNS Links */}
