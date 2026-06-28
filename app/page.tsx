@@ -159,29 +159,31 @@ export default async function HomePage() {
         <div className="absolute -bottom-1 left-0 right-0 h-5 bg-pink-50 rounded-t-[50%]" />
       </header>
 
-      {/* Menu List - 1列アイコン＋テキスト横並び */}
-      <div className="px-4 mt-2 space-y-2">
-        {menuItems.slice(0, -1).map((item) => (
+      {/* Menu Grid - 2列アイコン＋テキスト横並び */}
+      <div className="px-4 mt-2">
+        <div className="grid grid-cols-2 gap-2">
+          {menuItems.slice(0, -1).map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="bg-white rounded-xl px-3 py-2 flex items-center gap-2 card-hover border border-pink-100/50 active:bg-pink-50"
+            >
+              <span className="text-base w-5 text-center flex-shrink-0">{item.icon}</span>
+              <span className="text-[0.7rem] font-semibold text-gray-700 leading-tight">{item.label}</span>
+            </Link>
+          ))}
+          {/* ファンクラブ会報：全幅 */}
           <Link
-            key={item.href}
-            href={item.href}
-            className="bg-white rounded-2xl px-4 py-2.5 flex items-center gap-3 card-hover border border-pink-100/50 active:bg-pink-50"
+            href={menuItems[menuItems.length - 1].href}
+            className="col-span-2 bg-white rounded-xl px-3 py-2 flex items-center gap-2 card-hover border border-pink-100/50 active:bg-pink-50"
           >
-            <span className="text-xl w-7 text-center flex-shrink-0">{item.icon}</span>
-            <span className="text-sm font-semibold text-gray-700">{item.label}</span>
+            <span className="text-base w-5 text-center flex-shrink-0">{menuItems[menuItems.length - 1].icon}</span>
+            <span className="text-[0.7rem] font-semibold text-gray-700">{menuItems[menuItems.length - 1].label}</span>
+            <span className="ml-auto bg-pink-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full animate-bounce">
+              第20号 公開！
+            </span>
           </Link>
-        ))}
-        {/* ファンクラブ会報 */}
-        <Link
-          href={menuItems[menuItems.length - 1].href}
-          className="bg-white rounded-2xl px-4 py-2.5 flex items-center gap-3 card-hover border border-pink-100/50 active:bg-pink-50 relative"
-        >
-          <span className="text-xl w-7 text-center flex-shrink-0">{menuItems[menuItems.length - 1].icon}</span>
-          <span className="text-sm font-semibold text-gray-700">{menuItems[menuItems.length - 1].label}</span>
-          <span className="ml-auto bg-pink-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full animate-bounce">
-            第20号 公開！
-          </span>
-        </Link>
+        </div>
       </div>
 
       {/* Live banner */}
