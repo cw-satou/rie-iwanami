@@ -123,7 +123,7 @@ export default async function HomePage() {
           <div className="absolute bottom-0 left-0 right-0 px-5 pb-6 flex items-end justify-between">
             <div>
               <p className="text-white/80 text-[0.65rem] tracking-[0.25em] mb-1 font-medium">
-                IWANAMI RIE OFFICIAL APP
+                IWANAMI RIE OFFICIAL
               </p>
               <h1 className="text-white text-3xl font-bold tracking-wide drop-shadow-lg">
                 岩波理恵
