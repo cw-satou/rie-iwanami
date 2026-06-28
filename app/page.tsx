@@ -4,6 +4,7 @@ import { fetchBlog } from "@/lib/scrape-blog";
 import { fetchEvents } from "@/lib/scrape-events";
 import InstallPrompt from "@/components/InstallPrompt";
 import LiveBanner from "@/components/LiveBanner";
+import HamburgerMenu from "@/components/HamburgerMenu";
 
 interface MenuItem {
   href: string;
@@ -102,10 +103,11 @@ export default async function HomePage() {
   return (
     <div className="pb-6 page-enter">
       {/* Status Bar */}
-      <div className="header-gradient px-4 py-2 text-center">
+      <div className="header-gradient px-4 py-2 flex items-center justify-between">
         <span className="text-white/90 text-xs font-medium tracking-wider">
           岩波理恵公式アプリ
         </span>
+        <HamburgerMenu />
       </div>
 
       {/* Hero Header with Artist Photo */}
@@ -179,7 +181,7 @@ export default async function HomePage() {
           >
             <span className="text-base w-5 text-center flex-shrink-0">{menuItems[menuItems.length - 1].icon}</span>
             <span className="text-[0.7rem] font-semibold text-gray-700">{menuItems[menuItems.length - 1].label}</span>
-            <span className="ml-auto bg-pink-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full animate-bounce">
+            <span className="ml-auto bg-pink-500 text-white text-[0.75em] font-bold px-2.5 py-0.5 rounded-full animate-bounce">
               第20号 公開！
             </span>
           </Link>
