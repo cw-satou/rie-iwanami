@@ -110,7 +110,7 @@ export default async function HomePage() {
 
       {/* Hero Header with Artist Photo */}
       <header className="relative">
-        <div className="relative w-full aspect-[4/5] max-h-[480px] overflow-hidden">
+        <div className="relative w-full aspect-[4/5] max-h-[360px] overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/artist-photo.jpg"
@@ -140,9 +140,9 @@ export default async function HomePage() {
             <Link
               key={item.href}
               href={item.href}
-              className="bg-white rounded-2xl p-4 flex flex-col items-center gap-1.5 card-hover border border-pink-100/50 active:bg-pink-50"
+              className="bg-white rounded-2xl py-3 px-2 flex flex-col items-center gap-1 card-hover border border-pink-100/50 active:bg-pink-50"
             >
-              <span className="text-2xl">{item.icon}</span>
+              <span className="text-xl">{item.icon}</span>
               <span className="text-xs font-semibold text-gray-700 text-center leading-tight">
                 {item.label}
               </span>
@@ -151,12 +151,12 @@ export default async function HomePage() {
           {/* Last item: full width (ファンクラブ会報) */}
           <Link
             href={menuItems[menuItems.length - 1].href}
-            className="col-span-2 bg-white rounded-2xl p-4 flex flex-col items-center gap-1.5 card-hover border border-pink-100/50 active:bg-pink-50 relative"
+            className="col-span-2 bg-white rounded-2xl py-3 px-2 flex flex-col items-center gap-1 card-hover border border-pink-100/50 active:bg-pink-50 relative"
           >
             <span className="absolute top-2 right-3 bg-pink-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full animate-bounce">
               第20号 公開！
             </span>
-            <span className="text-2xl">{menuItems[menuItems.length - 1].icon}</span>
+            <span className="text-xl">{menuItems[menuItems.length - 1].icon}</span>
             <span className="text-xs font-semibold text-gray-700 text-center leading-tight">
               {menuItems[menuItems.length - 1].label}
             </span>
