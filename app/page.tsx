@@ -262,14 +262,6 @@ export default async function HomePage() {
         <p className="text-xs text-gray-300">
           © 2024-2026 岩波理恵公式アプリ
         </p>
-        <a
-          href="https://www.perplexity.ai/computer"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[0.65rem] text-gray-300 hover:text-gray-400"
-        >
-          Created with Perplexity Computer
-        </a>
       </footer>
 
     </div>
