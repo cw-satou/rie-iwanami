@@ -1,19 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-
-const APP_MENU = [
-  { href: "/news", label: "ニュース・イベント", icon: "📰" },
-  { href: "/blog", label: "個人ブログ", icon: "📝" },
-  { href: "/youtube", label: "ミュージックビデオ", icon: "🎬" },
-  { href: "/reiwa-channel", label: "Youtube", icon: "▶️" },
-  { href: "/live", label: "ライブ配信", icon: "📡" },
-  { href: "/agency", label: "事務所情報", icon: "🏢" },
-  { href: "/newsletter", label: "ファンクラブ会報", icon: "📖" },
-  { href: "/links", label: "リンク集", icon: "🔗" },
-  { href: "/about", label: "岩波理恵について", icon: "🎤" },
-];
 
 const LINK_CATEGORIES = [
   {
@@ -86,24 +73,6 @@ export default function HamburgerMenu() {
             </div>
 
             <div className="overflow-y-auto flex-1 pb-8">
-              {/* アプリ内メニュー */}
-              <div className="px-3 pt-2 pb-1">
-                <p className="text-[0.6rem] font-bold text-gray-400 tracking-wider mb-1 px-1">アプリ内</p>
-                {APP_MENU.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setOpen(false)}
-                    className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-pink-50 active:bg-pink-100 transition-colors"
-                  >
-                    <span className="text-sm w-5 text-center flex-shrink-0">{item.icon}</span>
-                    <span className="text-xs font-medium text-gray-700">{item.label}</span>
-                  </Link>
-                ))}
-              </div>
-
-              <div className="border-t border-gray-100 mx-3 my-1" />
-
               {/* 外部リンク */}
               {LINK_CATEGORIES.map((cat) => (
                 <div key={cat.title} className="px-3 py-1">
