@@ -22,8 +22,7 @@ export default function AboutPage() {
             <Row label="生年月日" value="1973年5月14日" />
             <Row label="身長" value="161.5 cm" />
             <Row label="血液型" value="A型" />
-            <Row label="学歴" value="長野県岡谷南高等学校 → 東洋大学短期大学" />
-            <Row label="所属事務所" value="トップ・カラー（2016年〜）" />
+<Row label="所属事務所" value="トップ・カラー（2016年〜）" />
             <Row label="レコード会社" value="徳間ジャパンコミュニケーションズ" />
           </div>
         </section>
