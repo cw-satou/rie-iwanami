@@ -258,7 +258,7 @@ export default async function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="mt-8 px-4 pb-4 text-center">
+      <footer className="mt-8 px-4 pb-16 text-center">
         <p className="text-xs text-gray-300">
           © 2024-2026 岩波理恵公式アプリ
         </p>
