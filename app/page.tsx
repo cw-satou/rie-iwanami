@@ -112,7 +112,7 @@ export default async function HomePage() {
 
       {/* Hero Header with Artist Photo */}
       <header className="relative">
-        <div className="relative w-full aspect-[4/5] max-h-[360px] overflow-hidden">
+        <div className="relative w-full aspect-[4/5] max-h-[432px] overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/artist-photo.jpg"
